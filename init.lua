@@ -197,13 +197,13 @@ local function stamina_globaltimer(dtime)
 					if enable_sprint_particles then
 
 						local pos = player:getpos()
---						local node = minetest.get_node({
---							x = pos.x,
---							y = pos.y - 1,
---							z = pos.z
---						})
+						local node = minetest.get_node({
+							x = pos.x,
+							y = pos.y - 1,
+							z = pos.z
+						})
 
---						if node.name ~= "air" then
+						if node.name ~= "air" then
 
 						minetest.add_particlespawner({
 							amount = 5,
@@ -223,7 +223,7 @@ local function stamina_globaltimer(dtime)
 							texture = "default_dirt.png",
 						})
 
---						end
+						end
 					end
 
 					-- Lower the player's stamina when sprinting
