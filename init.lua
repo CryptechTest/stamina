@@ -209,11 +209,11 @@ local function stamina_globaltimer(dtime)
 			-- Determine if the player is walking
 			if controls.jump then
 
-				exhaust_player(player, STAMINA_EXHAUST_JUMP)
+				exhaust_player(players[n], STAMINA_EXHAUST_JUMP)
 
 			elseif controls.up or controls.down or controls.left or controls.right then
 
-				exhaust_player(player, STAMINA_EXHAUST_MOVE)
+				exhaust_player(players[n], STAMINA_EXHAUST_MOVE)
 			end
 
 			--- START sprint
