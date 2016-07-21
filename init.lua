@@ -409,7 +409,7 @@ function stamina.eat(hp_change, replace_with_item, itemstack, user, pointed_thin
 		poison_player(2.0, -hp_change, 0, user)
 	end
 
-	minetest.sound_play("stamina_eat", {to_player = name, gain = 0.7, max_hear_distance = 5})
+	minetest.sound_play("stamina_eat", {pos = user:getpos(), gain = 0.7, max_hear_distance = 5})
 
 	itemstack:take_item()
 
