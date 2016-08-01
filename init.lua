@@ -223,7 +223,7 @@ local function stamina_globaltimer(dtime)
 
 				-- check if player can sprint (stamina must be over 6 points)
 				if controls.aux1 and controls.up
-				and not minetest.check_player_privs(players[n], {fast = true})
+				and not minetest.check_player_privs(name, {fast = true})
 				and stamina_players[name].level > 6 then
 
 					set_sprinting(name, true)
