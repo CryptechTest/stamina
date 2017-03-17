@@ -27,6 +27,7 @@ SPRINT_SPEED = 0.8 		-- how much faster player can run if satiated
 SPRINT_JUMP = 0.1 		-- how much higher player can jump if satiated
 SPRINT_DRAIN = 0.35 		-- how fast to drain satation while sprinting (0-1)
 
+
 local function stamina_read(player)
 
 	local inv = player:get_inventory()
@@ -46,6 +47,7 @@ local function stamina_read(player)
 	return v - 1
 end
 
+
 local function stamina_save(player)
 
 	local inv = player:get_inventory()
@@ -63,6 +65,7 @@ local function stamina_save(player)
 
 	return true
 end
+
 
 local function stamina_update(player, level)
 
@@ -85,6 +88,7 @@ local function stamina_update(player, level)
 	stamina_save(player)
 end
 
+
 stamina.change = function(player, change)
 
 	local name = player:get_player_name()
@@ -102,6 +106,7 @@ stamina.change = function(player, change)
 
 	stamina_update(player, level)
 end
+
 
 local function exhaust_player(player, v)
 
@@ -142,6 +147,7 @@ local function exhaust_player(player, v)
 
 	s.exhaust = e
 end
+
 
 -- Sprint settings and function
 local enable_sprint = minetest.setting_getbool("sprint") ~= false
@@ -186,6 +192,7 @@ function set_sprinting(name, sprinting)
 
 	return false
 end
+
 
 -- Time based stamina functions
 local stamina_timer = 0
@@ -336,6 +343,7 @@ local function stamina_globaltimer(dtime)
 
 end
 
+
 local function poison_player(ticks, time, elapsed, user)
 
 	local name = user:get_player_name()
@@ -358,6 +366,7 @@ local function poison_player(ticks, time, elapsed, user)
 	end
 end
 
+
 -- override core.do_item_eat() so we can redirect hp_change to stamina
 core.do_item_eat = function(hp_change, replace_with_item, itemstack, user, pointed_thing)
 
@@ -376,6 +385,7 @@ core.do_item_eat = function(hp_change, replace_with_item, itemstack, user, point
 
 	return itemstack
 end
+
 
 -- not local since it's called from within core context
 function stamina.eat(hp_change, replace_with_item, itemstack, user, pointed_thing)
@@ -411,6 +421,29 @@ function stamina.eat(hp_change, replace_with_item, itemstack, user, pointed_thin
 
 	minetest.sound_play("stamina_eat", {pos = user:getpos(), gain = 0.7, max_hear_distance = 5})
 
+-- particle effect when eating
+local pos = user:getpos() ; pos.y = pos.y + 1.5
+local vel = user:get_player_velocity()
+local itemname = itemstack:get_name()
+local texture  = minetest.registered_items[itemname].inventory_image
+local dir = user:get_look_dir()
+
+minetest.add_particlespawner({
+	amount = 5,
+	time = 0.1,
+	minpos = pos,
+	maxpos = pos,
+	minvel = {x = dir.x - 1, y = dir.y, z = dir.z - 1},
+	maxvel = {x = dir.x + 1, y = dir.y, z = dir.z + 1},
+	minacc = {x = 0, y = -5, z = 0},
+	maxacc = {x = 0, y = -9, z = 0},
+	minexptime = 1,
+	maxexptime = 1,
+	minsize = 1,
+	maxsize = 2,
+	texture = texture,
+})
+
 	itemstack:take_item()
 
 	if replace_with_item then
@@ -434,6 +467,7 @@ function stamina.eat(hp_change, replace_with_item, itemstack, user, pointed_thin
 
 	return itemstack
 end
+
 
 -- stamina is disabled if damage is disabled
 if minetest.setting_getbool("enable_damage")
