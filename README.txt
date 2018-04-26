@@ -47,6 +47,9 @@ A global function is available for mods to change player stamina levels:
 
    stamina.change(player, change)
 
+This mod has added support for POVA and player_monoids for overrides to play
+nicely.
+
 
 License:
 --------
