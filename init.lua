@@ -297,7 +297,7 @@ local function stamina_globaltimer(dtime)
 			action_timer = 0
 		end
 
-		-- lower saturation by 1 point after STAMINA_TICK second(s)
+		-- lower saturation by 1 point after STAMINA_TICK
 		if stamina_timer > STAMINA_TICK then
 
 			local h = get_int_attribute(player, "stamina:level")
@@ -464,6 +464,7 @@ and minetest.setting_get("enable_stamina") ~= false then
 		})
 
 		player:set_attribute("stamina:hud_id", id)
+		player:set_attribute("stamina:exhaustion", 0) -- reset
 	end)
 
 	minetest.register_globalstep(stamina_globaltimer)
