@@ -381,7 +381,7 @@ function stamina.eat(hp_change, replace_with_item, itemstack, user, pointed_thin
 
 	elseif hp_change < 0 then
 
-		-- assume hp_change < 0.
+		-- assume hp_change < 0
 		user:hud_change(user:get_attribute("stamina:hud_id"), "text",
 				"stamina_hud_poison.png")
 
@@ -486,6 +486,7 @@ and minetest.setting_get("enable_stamina") ~= false then
 	end)
 
 	minetest.register_on_respawnplayer(function(player)
+		stamina.players[player:get_player_name()] = {poisoned = nil, sprint = nil}
 		stamina_update_level(player, STAMINA_VISUAL_MAX)
 	end)
 end
