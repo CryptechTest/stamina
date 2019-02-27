@@ -29,6 +29,8 @@ SPRINT_DRAIN = 0.35			-- how fast to drain satation while sprinting (0-1)
 
 local function get_int_attribute(player, key)
 
+	if not player.get_attribute then return nil end -- pipeworks fake player check
+
 	local level = player:get_attribute(key)
 
 	if level then
@@ -40,6 +42,8 @@ end
 
 
 local function stamina_update_level(player, level)
+
+	if not player.get_attribute then return nil end -- pipeworks fake player check
 
 	local old = get_int_attribute(player, "stamina:level")
 
@@ -342,6 +346,10 @@ end
 
 -- override core.do_item_eat() so we can redirect hp_change to stamina
 core.do_item_eat = function(hp_change, replace_with_item, itemstack, user, pointed_thing)
+
+	if user.is_fake_player then
+		return -- abort if called by fake player (eg. pipeworks-wielder)
+	end
 
 	local old_itemstack = itemstack
 
