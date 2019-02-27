@@ -47,8 +47,13 @@ A global function is available for mods to change player stamina levels:
 
    stamina.change(player, change)
 
-This mod has added support for POVA and player_monoids for overrides to play
-nicely, it also has some pipeworks checks for fake players.
+
+TenPlus1 Additions:
+-------------------
+
+ - Added support for POVA and player_monoids
+ - Added Pipeworks checks for fake players
+ - Added 60 second drunk effect when foods have {alcohol=1} group (eat 3 or more)
 
 
 License:

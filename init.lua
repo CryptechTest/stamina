@@ -190,6 +190,7 @@ local stamina_timer = 0
 local health_timer = 0
 local action_timer = 0
 local poison_timer = 0
+local drunk_timer = 0
 
 local function stamina_globaltimer(dtime)
 
@@ -197,8 +198,32 @@ local function stamina_globaltimer(dtime)
 	health_timer = health_timer + dtime
 	action_timer = action_timer + dtime
 	poison_timer = poison_timer + dtime
+	drunk_timer = drunk_timer + dtime
 
 	for _,player in ipairs(minetest.get_connected_players()) do
+
+		-- simulate drunk walking (thanks LumberJ)
+		if drunk_timer > 1.0 then
+
+			local name = player:get_player_name()
+
+			if stamina.players[name] and stamina.players[name].drunk then
+
+				local yaw = player:get_look_horizontal()
+
+				yaw = yaw + math.random(-0.5, 0.5)
+
+				player:set_look_horizontal(yaw)
+
+				stamina.players[name].drunk = stamina.players[name].drunk - 1
+
+				if stamina.players[name].drunk < 0 then
+					stamina.players[name].drunk = nil
+				end
+			end
+
+			drunk_timer = 0
+		end
 
 		-- hurt player when poisoned
 		if poison_timer > STAMINA_POISON_TICK then
@@ -436,6 +461,22 @@ function stamina.eat(hp_change, replace_with_item, itemstack, user, pointed_thin
 				pos.y = math.floor(pos.y - 1.0)
 				core.add_item(pos, replace_with_item)
 			end
+		end
+	end
+
+	-- check for alcohol
+	local units = minetest.registered_items[itemname].groups
+			and minetest.registered_items[itemname].groups.alcohol or 0
+
+	if units > 0 then
+
+		local name = user:get_player_name()
+
+		stamina.players[name].units = (stamina.players[name].units or 0) + 1
+
+		if stamina.players[name].units > 2 then
+			stamina.players[name].drunk = 60
+			stamina.players[name].units = 0
 		end
 	end
 
