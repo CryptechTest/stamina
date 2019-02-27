@@ -207,7 +207,9 @@ local function stamina_globaltimer(dtime)
 
 			local name = player:get_player_name()
 
-			if stamina.players[name] and stamina.players[name].drunk then
+			if stamina.players[name]
+			and stamina.players[name].drunk
+			and not player:get_attach() then
 
 				local yaw = player:get_look_horizontal()
 
