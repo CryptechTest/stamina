@@ -29,25 +29,31 @@ SPRINT_DRAIN = 0.35			-- how fast to drain satation while sprinting (0-1)
 
 local function get_int_attribute(player, key)
 
-	if not player.get_attribute then return nil end -- pipeworks fake player check
+	-- pipeworks fake player check
+	if not player.get_attribute then
+		return nil
+	end
 
 	local level = player:get_attribute(key)
 
 	if level then
 		return tonumber(level)
-	else
-		return nil
 	end
+
+	return nil
 end
 
 
 local function stamina_update_level(player, level)
 
-	if not player.get_attribute then return nil end -- pipeworks fake player check
+	-- pipeworks fake player check
+	if not player.get_attribute then
+		return nil
+	end
 
 	local old = get_int_attribute(player, "stamina:level")
 
-	if level == old then  -- To suppress HUD update
+	if level == old then -- To suppress HUD update
 		return
 	end
 
@@ -94,9 +100,7 @@ local function exhaust_player(player, v)
 		return
 	end
 
-	local exhaustion = stamina.players[name].exhaustion
-
-	exhaustion = exhaustion + v
+	local exhaustion = stamina.players[name].exhaustion + v
 
 	if exhaustion > STAMINA_EXHAUST_LVL then
 
@@ -116,7 +120,6 @@ end
 -- Sprint settings and function
 local enable_sprint = minetest.setting_getbool("sprint") ~= false
 local enable_sprint_particles = minetest.setting_getbool("sprint_particles") ~= false
---local armor_mod = minetest.get_modpath("3d_armor")
 local monoids = minetest.get_modpath("player_monoids")
 local pova_mod = minetest.get_modpath("pova")
 
@@ -242,9 +245,9 @@ local function stamina_globaltimer(dtime)
 			and stamina.players[name].poisoned > 0 then
 
 				stamina.players[name].poisoned =
-						stamina.players[name].poisoned - 1
+					stamina.players[name].poisoned - 1
 
-				local hp = player:get_hp() - 1 or 0
+				local hp = player:get_hp() - 1
 
 				if hp > 0 then
 					player:set_hp(hp)
@@ -418,8 +421,7 @@ function stamina.eat(hp_change, replace_with_item, itemstack, user, pointed_thin
 
 	if hp_change > 0 then
 
-		level = level + hp_change
-		stamina_update_level(user, level)
+		stamina_update_level(user, level + hp_change)
 
 	elseif hp_change < 0 then
 
@@ -528,11 +530,13 @@ and minetest.setting_get("enable_stamina") ~= false then
 			max = 0,
 		})
 
-		stamina.players[name] = {}
-		stamina.players[name].hud_id = id
-		stamina.players[name].exhaustion = 0
-		stamina.players[name].poisoned = nil
-		stamina.players[name].drunk = nil
+		stamina.players[name] = {
+			hud_id = id,
+			exhaustion = 0,
+			poisoned = nil,
+			drunk = nil,
+			sprint = nil,
+		}
 	end)
 
 	minetest.register_on_respawnplayer(function(player)
@@ -548,6 +552,7 @@ and minetest.setting_get("enable_stamina") ~= false then
 		stamina.players[name].exhaustion = 0
 		stamina.players[name].poisoned = nil
 		stamina.players[name].drunk = nil
+		stamina.players[name].sprint = nil
 
 		stamina_update_level(player, STAMINA_VISUAL_MAX)
 	end)
@@ -575,7 +580,7 @@ else
 	-- create player table on join
 	minetest.register_on_joinplayer(function(player)
 		stamina.players[player:get_player_name()] = {
-			poisoned = nil, sprint = nil, drunk = nil}
+			poisoned = nil, sprint = nil, drunk = nil, exhaustion = 0}
 	end)
 
 end
