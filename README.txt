@@ -53,7 +53,8 @@ TenPlus1 Additions:
 
  - Added support for POVA and player_monoids
  - Added Pipeworks checks for fake players
- - Added 60 second drunk effect when foods have {alcohol=1} group (eat 3 or more)
+ - Added 60 second drunk effect when foods have {alcohol=1} group (eat 4 or more)
+ - Moved exhaustion and hud_id to player table instead of player attributes
 
 
 License:

@@ -53,8 +53,8 @@ local function stamina_update_level(player, level)
 
 	player:set_attribute("stamina:level", level)
 
-	player:hud_change(player:get_attribute("stamina:hud_id"), "number",
-			math.min(STAMINA_VISUAL_MAX, level))
+	player:hud_change(stamina.players[player:get_player_name()].hud_id,
+		"number", math.min(STAMINA_VISUAL_MAX, level))
 end
 
 
@@ -94,7 +94,7 @@ local function exhaust_player(player, v)
 		return
 	end
 
-	local exhaustion = get_int_attribute(player, "stamina:exhaustion") or 0
+	local exhaustion = stamina.players[name].exhaustion
 
 	exhaustion = exhaustion + v
 
@@ -109,7 +109,7 @@ local function exhaust_player(player, v)
 		end
 	end
 
-	player:set_attribute("stamina:exhaustion", exhaustion)
+	stamina.players[name].exhaustion = exhaustion
 end
 
 
@@ -200,27 +200,35 @@ local function stamina_globaltimer(dtime)
 	poison_timer = poison_timer + dtime
 	drunk_timer = drunk_timer + dtime
 
-	for _,player in ipairs(minetest.get_connected_players()) do
+	for _,player in pairs(minetest.get_connected_players()) do
+
+		local name = player:get_player_name()
 
 		-- simulate drunk walking (thanks LumberJ)
 		if drunk_timer > 1.0 then
 
-			local name = player:get_player_name()
-
 			if stamina.players[name]
-			and stamina.players[name].drunk
-			and not player:get_attach() then
-
-				local yaw = player:get_look_horizontal()
-
-				yaw = yaw + math.random(-0.5, 0.5)
-
-				player:set_look_horizontal(yaw)
+			and stamina.players[name].drunk then
 
 				stamina.players[name].drunk = stamina.players[name].drunk - 1
 
-				if stamina.players[name].drunk < 0 then
+				if stamina.players[name].drunk < 1 then
+
 					stamina.players[name].drunk = nil
+					stamina.players[name].units = 0
+
+					player:hud_change(stamina.players[name].hud_id,
+						"text", "stamina_hud_fg.png")
+				end
+
+				-- effect only works when not riding boat/cart/horse etc.
+				if not player:get_attach() then
+
+					local yaw = player:get_look_horizontal()
+
+					yaw = yaw + math.random(-0.5, 0.5)
+
+					player:set_look_horizontal(yaw)
 				end
 			end
 
@@ -230,13 +238,11 @@ local function stamina_globaltimer(dtime)
 		-- hurt player when poisoned
 		if poison_timer > STAMINA_POISON_TICK then
 
-			local name = player:get_player_name()
-
 			if stamina.players[name].poisoned
 			and stamina.players[name].poisoned > 0 then
 
 				stamina.players[name].poisoned =
-						stamina.players[name].poisoned - STAMINA_POISON_TICK
+						stamina.players[name].poisoned - 1
 
 				local hp = player:get_hp() - 1 or 0
 
@@ -246,8 +252,8 @@ local function stamina_globaltimer(dtime)
 
 			elseif stamina.players[name].poisoned then
 
-				player:hud_change(player:get_attribute("stamina:hud_id"),
-						"text", "stamina_hud_fg.png")
+				player:hud_change(stamina.players[name].hud_id,
+					"text", "stamina_hud_fg.png")
 
 				stamina.players[name].poisoned = nil
 			end
@@ -274,10 +280,9 @@ local function stamina_globaltimer(dtime)
 			--- START sprint
 			if enable_sprint then
 
-				local name = player:get_player_name()
-
 				-- check if player can sprint (stamina must be over 6 points)
 				if not stamina.players[name].poisoned
+				and not stamina.players[name].drunk
 				and controls.aux1 and controls.up
 				and not minetest.check_player_privs(player, {fast = true})
 				and get_int_attribute(player, "stamina:level") > 6 then
@@ -345,28 +350,28 @@ local function stamina_globaltimer(dtime)
 
 			local air = player:get_breath() or 0
 			local hp = player:get_hp()
-
-			-- don't heal if drowning or dead or poisoned
 			local h = get_int_attribute(player, "stamina:level")
 
+			-- damage player by 1 hp if saturation is < 2 (of 30)
+			if h < STAMINA_STARVE_LVL then
+				player:set_hp(hp - STAMINA_STARVE)
+			end
+
+			-- don't heal if drowning or dead or poisoned
 			if h >= STAMINA_HEAL_LVL
 			and h >= hp
 			and hp > 0
 			and air > 0
-			and not stamina.players[player:get_player_name()].poisoned then
+			and not stamina.players[name].poisoned then
 
 				player:set_hp(hp + STAMINA_HEAL)
 
 				stamina_update_level(player, h - 1)
 			end
 
-			-- or damage player by 1 hp if saturation is < 2 (of 30)
-			if get_int_attribute(player, "stamina:level") < STAMINA_STARVE_LVL then
-				player:set_hp(hp - STAMINA_STARVE)
-			end
-
 			health_timer = 0
 		end
+
 	end -- player loop
 end
 
@@ -409,6 +414,8 @@ function stamina.eat(hp_change, replace_with_item, itemstack, user, pointed_thin
 		return itemstack
 	end
 
+	local name = user:get_player_name()
+
 	if hp_change > 0 then
 
 		level = level + hp_change
@@ -417,14 +424,13 @@ function stamina.eat(hp_change, replace_with_item, itemstack, user, pointed_thin
 	elseif hp_change < 0 then
 
 		-- assume hp_change < 0
-		user:hud_change(user:get_attribute("stamina:hud_id"), "text",
-				"stamina_hud_poison.png")
+		user:hud_change(stamina.players[name].hud_id, "text",
+			"stamina_hud_poison.png")
 
-		stamina.players[user:get_player_name()].poisoned = -hp_change
+		stamina.players[name].poisoned = -hp_change
 	end
 
-	minetest.sound_play("stamina_eat",
-			{to_player = user:get_player_name(), gain = 0.7})
+	minetest.sound_play("stamina_eat", {to_player = name, gain = 0.7})
 
 	-- particle effect when eating
 	local pos = user:get_pos() ; pos.y = pos.y + 1.5 -- mouth level
@@ -472,13 +478,19 @@ function stamina.eat(hp_change, replace_with_item, itemstack, user, pointed_thin
 
 	if units > 0 then
 
-		local name = user:get_player_name()
-
 		stamina.players[name].units = (stamina.players[name].units or 0) + 1
 
-		if stamina.players[name].units > 2 then
+		if stamina.players[name].units > 3 then
+
 			stamina.players[name].drunk = 60
 			stamina.players[name].units = 0
+
+			user:hud_change(stamina.players[name].hud_id, "text",
+				"stamina_hud_poison.png")
+
+			minetest.chat_send_player(name,
+				minetest.get_color_escape_sequence("#1eff00")
+				.. "You suddenly feel tipsy!")
 		end
 	end
 
@@ -502,6 +514,8 @@ and minetest.setting_get("enable_stamina") ~= false then
 			player:set_attribute("stamina:level", level)
 		end
 
+		local name = player:get_player_name()
+
 		local id = player:hud_add({
 			name = "stamina",
 			hud_elem_type = "statbar",
@@ -514,8 +528,22 @@ and minetest.setting_get("enable_stamina") ~= false then
 			max = 0,
 		})
 
-		player:set_attribute("stamina:hud_id", id)
-		player:set_attribute("stamina:exhaustion", 0) -- reset
+		stamina.players[name] = {}
+		stamina.players[name].hud_id = id
+		stamina.players[name].exhaustion = 0
+		stamina.players[name].poisoned = 0
+		stamina.players[name].drunk = nil
+	end)
+
+	minetest.register_on_respawnplayer(function(player)
+
+		local name = player:get_player_name()
+
+		stamina.players[name].exhaustion = 0
+		stamina.players[name].poisoned = 0
+		stamina.players[name].drunk = nil
+
+		stamina_update_level(player, STAMINA_VISUAL_MAX)
 	end)
 
 	minetest.register_globalstep(stamina_globaltimer)
@@ -536,18 +564,15 @@ and minetest.setting_get("enable_stamina") ~= false then
 		exhaust_player(hitter, STAMINA_EXHAUST_PUNCH)
 	end)
 
-	minetest.register_on_respawnplayer(function(player)
-		stamina.players[player:get_player_name()] = {poisoned = nil, sprint = nil}
-		stamina_update_level(player, STAMINA_VISUAL_MAX)
+else
+
+	-- create player table on join
+	minetest.register_on_joinplayer(function(player)
+		stamina.players[player:get_player_name()] = {
+			poisoned = nil, sprint = nil, drunk = nil}
 	end)
+
 end
-
-
--- create player table on join
-minetest.register_on_joinplayer(function(player)
-	stamina.players[player:get_player_name()] = {poisoned = nil, sprint = nil}
-end)
-
 
 -- clear when player leaves
 minetest.register_on_leaveplayer(function(player)
