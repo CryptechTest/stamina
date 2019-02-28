@@ -531,7 +531,7 @@ and minetest.setting_get("enable_stamina") ~= false then
 		stamina.players[name] = {}
 		stamina.players[name].hud_id = id
 		stamina.players[name].exhaustion = 0
-		stamina.players[name].poisoned = 0
+		stamina.players[name].poisoned = nil
 		stamina.players[name].drunk = nil
 	end)
 
@@ -539,8 +539,14 @@ and minetest.setting_get("enable_stamina") ~= false then
 
 		local name = player:get_player_name()
 
+		if stamina.players[name].poisoned
+		or stamina.players[name].drunk then
+			player:hud_change(stamina.players[name].hud_id,
+				"text", "stamina_hud_fg.png")
+		end
+
 		stamina.players[name].exhaustion = 0
-		stamina.players[name].poisoned = 0
+		stamina.players[name].poisoned = nil
 		stamina.players[name].drunk = nil
 
 		stamina_update_level(player, STAMINA_VISUAL_MAX)
