@@ -203,12 +203,14 @@ local function stamina_globaltimer(dtime)
 	poison_timer = poison_timer + dtime
 	drunk_timer = drunk_timer + dtime
 
-	for _,player in pairs(minetest.get_connected_players()) do
+	local players = minetest.get_connected_players()
 
-		local name = player:get_player_name()
+	-- simulate drunk walking (thanks LumberJ)
+	if drunk_timer > 1.0 then
 
-		-- simulate drunk walking (thanks LumberJ)
-		if drunk_timer > 1.0 then
+		for _,player in pairs(players) do
+
+			local name = player:get_player_name()
 
 			if stamina.players[name]
 			and stamina.players[name].drunk then
@@ -237,9 +239,15 @@ local function stamina_globaltimer(dtime)
 
 			drunk_timer = 0
 		end
+	end
 
-		-- hurt player when poisoned
-		if poison_timer > STAMINA_POISON_TICK then
+
+	-- hurt player when poisoned
+	if poison_timer > STAMINA_POISON_TICK then
+
+		for _,player in pairs(players) do
+
+			local name = player:get_player_name()
 
 			if stamina.players[name].poisoned
 			and stamina.players[name].poisoned > 0 then
@@ -263,9 +271,13 @@ local function stamina_globaltimer(dtime)
 
 			poison_timer = 0
 		end
+		end
+
 
 		-- sprint control and particle animation
-		if action_timer > STAMINA_MOVE_TICK then
+	if action_timer > STAMINA_MOVE_TICK then
+
+		for _,player in pairs(players) do
 
 			local controls = player:get_player_control()
 
@@ -282,6 +294,8 @@ local function stamina_globaltimer(dtime)
 
 			--- START sprint
 			if enable_sprint then
+
+				local name = player:get_player_name()
 
 				-- check if player can sprint (stamina must be over 6 points)
 				if not stamina.players[name].poisoned
@@ -335,9 +349,14 @@ local function stamina_globaltimer(dtime)
 
 			action_timer = 0
 		end
+	end
 
-		-- lower saturation by 1 point after STAMINA_TICK
-		if stamina_timer > STAMINA_TICK then
+
+
+	-- lower saturation by 1 point after STAMINA_TICK
+	if stamina_timer > STAMINA_TICK then
+
+		for _,player in pairs(players) do
 
 			local h = get_int_attribute(player, "stamina:level")
 
@@ -347,13 +366,18 @@ local function stamina_globaltimer(dtime)
 
 			stamina_timer = 0
 		end
+	end
 
-		-- heal or damage player, depending on saturation
-		if health_timer > STAMINA_HEALTH_TICK then
+
+	-- heal or damage player, depending on saturation
+	if health_timer > STAMINA_HEALTH_TICK then
+
+		for _,player in pairs(players) do
 
 			local air = player:get_breath() or 0
 			local hp = player:get_hp()
 			local h = get_int_attribute(player, "stamina:level")
+			local name = player:get_player_name()
 
 			-- damage player by 1 hp if saturation is < 2 (of 30)
 			if h < STAMINA_STARVE_LVL then
@@ -374,8 +398,8 @@ local function stamina_globaltimer(dtime)
 
 			health_timer = 0
 		end
+	end
 
-	end -- player loop
 end
 
 
