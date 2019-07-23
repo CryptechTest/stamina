@@ -57,6 +57,11 @@ local function stamina_update_level(player, level)
 		return
 	end
 
+	-- players without interact priv cannot eat
+	if not minetest.check_player_privs(player, {interact = true}) then
+		return
+	end
+
 	player:set_attribute("stamina:level", level)
 
 	player:hud_change(stamina.players[player:get_player_name()].hud_id,
@@ -271,7 +276,7 @@ local function stamina_globaltimer(dtime)
 
 			poison_timer = 0
 		end
-		end
+	end
 
 
 		-- sprint control and particle animation
