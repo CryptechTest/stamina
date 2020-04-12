@@ -27,14 +27,15 @@ SPRINT_JUMP = 0.1			-- how much higher player can jump if satiated
 SPRINT_DRAIN = 0.35			-- how fast to drain satation while sprinting (0-1)
 
 
-local function get_int_attribute(player, key)
+local function get_int_attribute(player)
 
 	-- pipeworks fake player check
 	if not player.get_attribute then
 		return nil
 	end
 
-	local level = player:get_attribute(key)
+	local meta = player:get_meta()
+	local level = meta:get_string("stamina:level")
 
 	if level then
 		return tonumber(level)
@@ -51,7 +52,7 @@ local function stamina_update_level(player, level)
 		return nil
 	end
 
-	local old = get_int_attribute(player, "stamina:level")
+	local old = get_int_attribute(player)
 
 	if level == old then -- To suppress HUD update
 		return
@@ -62,7 +63,8 @@ local function stamina_update_level(player, level)
 		return
 	end
 
-	player:set_attribute("stamina:level", level)
+	local meta = player:get_meta()
+	meta:set_string("stamina:level", level)
 
 	player:hud_change(stamina.players[player:get_player_name()].hud_id,
 		"number", math.min(STAMINA_VISUAL_MAX, level))
@@ -78,7 +80,7 @@ stamina.change = function(player, change)
 		return false
 	end
 
-	local level = get_int_attribute(player, "stamina:level") + change
+	local level = get_int_attribute(player) + change
 
 	if level < 0 then level = 0 end
 
@@ -111,7 +113,7 @@ local function exhaust_player(player, v)
 
 		exhaustion = 0
 
-		local h = get_int_attribute(player, "stamina:level")
+		local h = get_int_attribute(player)
 
 		if h > 0 then
 			stamina_update_level(player, h - 1)
@@ -254,7 +256,8 @@ local function stamina_globaltimer(dtime)
 
 			local name = player:get_player_name()
 
-			if stamina.players[name].poisoned
+			if stamina.players[name]
+			and stamina.players[name].poisoned
 			and stamina.players[name].poisoned > 0 then
 
 				stamina.players[name].poisoned =
@@ -307,7 +310,7 @@ local function stamina_globaltimer(dtime)
 				and not stamina.players[name].drunk
 				and controls.aux1 and controls.up
 				and not minetest.check_player_privs(player, {fast = true})
-				and get_int_attribute(player, "stamina:level") > 6 then
+				and get_int_attribute(player) > 6 then
 
 					set_sprinting(name, true)
 
@@ -342,7 +345,7 @@ local function stamina_globaltimer(dtime)
 					end
 
 					-- Lower the player's stamina when sprinting
-					local level = get_int_attribute(player, "stamina:level")
+					local level = get_int_attribute(player)
 
 					stamina_update_level(player,
 							level - (SPRINT_DRAIN * STAMINA_MOVE_TICK))
@@ -363,7 +366,7 @@ local function stamina_globaltimer(dtime)
 
 		for _,player in pairs(players) do
 
-			local h = get_int_attribute(player, "stamina:level")
+			local h = get_int_attribute(player)
 
 			if h > STAMINA_TICK_MIN then
 				stamina_update_level(player, h - 1)
@@ -381,7 +384,7 @@ local function stamina_globaltimer(dtime)
 
 			local air = player:get_breath() or 0
 			local hp = player:get_hp()
-			local h = get_int_attribute(player, "stamina:level")
+			local h = get_int_attribute(player)
 			local name = player:get_player_name()
 
 			-- damage player by 1 hp if saturation is < 2 (of 30)
@@ -441,7 +444,7 @@ function stamina.eat(hp_change, replace_with_item, itemstack, user, pointed_thin
 		return itemstack
 	end
 
-	local level = get_int_attribute(user, "stamina:level") or 0
+	local level = get_int_attribute(user) or 0
 
 	if level >= STAMINA_VISUAL_MAX then
 		return itemstack
@@ -538,12 +541,13 @@ and minetest.setting_get("enable_stamina") ~= false then
 
 		local level = STAMINA_VISUAL_MAX -- TODO
 
-		if get_int_attribute(player, "stamina:level") then
+		if get_int_attribute(player) then
 
-			level = math.min(get_int_attribute(player, "stamina:level"),
+			level = math.min(get_int_attribute(player),
 					STAMINA_VISUAL_MAX)
 		else
-			player:set_attribute("stamina:level", level)
+			local meta = player:get_meta()
+			meta:set_string("stamina:level", level)
 		end
 
 		local name = player:get_player_name()
