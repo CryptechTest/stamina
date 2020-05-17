@@ -266,7 +266,7 @@ local function stamina_globaltimer(dtime)
 				local hp = player:get_hp() - 1
 
 				if hp > 0 then
-					player:set_hp(hp)
+					player:set_hp(hp, {poison = true})
 				end
 
 			elseif stamina.players[name].poisoned then
@@ -390,7 +390,7 @@ local function stamina_globaltimer(dtime)
 			-- damage player by 1 hp if saturation is < 2 (of 30)
 			if h < STAMINA_STARVE_LVL
 			and hp > 0 then
-				player:set_hp(hp - STAMINA_STARVE)
+				player:set_hp(hp - STAMINA_STARVE, {hunger = true})
 			end
 
 			-- don't heal if drowning or dead or poisoned
