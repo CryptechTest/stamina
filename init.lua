@@ -35,7 +35,7 @@ local function get_int_attribute(player)
 	end
 
 	local meta = player:get_meta()
-	local level = meta:get_string("stamina:level")
+	local level = meta and meta:get_string("stamina:level")
 
 	if level then
 		return tonumber(level)
@@ -63,11 +63,12 @@ local function stamina_update_level(player, level)
 		return
 	end
 
-	local meta = player:get_meta()
+	local meta = player:get_meta() ; if not meta then return end
+
 	meta:set_string("stamina:level", level)
 
-	player:hud_change(stamina.players[player:get_player_name()].hud_id,
-		"number", math.min(STAMINA_VISUAL_MAX, level))
+	player:hud_change(stamina.players[player:get_player_name()].hud_id, "number",
+			math.min(STAMINA_VISUAL_MAX, level))
 end
 
 
@@ -323,23 +324,23 @@ local function stamina_globaltimer(dtime)
 
 						if node.name ~= "air" then
 
-						minetest.add_particlespawner({
-							amount = 5,
-							time = 0.01,
-							minpos = {x = pos.x - 0.25, y = pos.y + 0.1, z = pos.z - 0.25},
-							maxpos = {x = pos.x + 0.25, y = pos.y + 0.1, z = pos.z + 0.25},
-							minvel = {x = -0.5, y = 1, z = -0.5},
-							maxvel = {x = 0.5, y = 2, z = 0.5},
-							minacc = {x = 0, y = -5, z = 0},
-							maxacc = {x = 0, y = -12, z = 0},
-							minexptime = 0.25,
-							maxexptime = 0.5,
-							minsize = 0.5,
-							maxsize = 1.0,
-							vertical = false,
-							collisiondetection = false,
-							texture = "default_dirt.png",
-						})
+					minetest.add_particlespawner({
+						amount = 5,
+						time = 0.01,
+						minpos = {x = pos.x - 0.25, y = pos.y + 0.1, z = pos.z - 0.25},
+						maxpos = {x = pos.x + 0.25, y = pos.y + 0.1, z = pos.z + 0.25},
+						minvel = {x = -0.5, y = 1, z = -0.5},
+						maxvel = {x = 0.5, y = 2, z = 0.5},
+						minacc = {x = 0, y = -5, z = 0},
+						maxacc = {x = 0, y = -12, z = 0},
+						minexptime = 0.25,
+						maxexptime = 0.5,
+						minsize = 0.5,
+						maxsize = 1.0,
+						vertical = false,
+						collisiondetection = false,
+						texture = "default_dirt.png",
+					})
 
 						end
 					end
@@ -358,7 +359,6 @@ local function stamina_globaltimer(dtime)
 			action_timer = 0
 		end
 	end
-
 
 
 	-- lower saturation by 1 point after STAMINA_TICK
@@ -421,7 +421,8 @@ core.do_item_eat = function(hp_change, replace_with_item, itemstack, user, point
 
 	local old_itemstack = itemstack
 
-	itemstack = stamina.eat(hp_change, replace_with_item, itemstack, user, pointed_thing)
+	itemstack = stamina.eat(
+			hp_change, replace_with_item, itemstack, user, pointed_thing)
 
 	for _, callback in pairs(core.registered_on_item_eats) do
 
@@ -547,6 +548,7 @@ and minetest.setting_get("enable_stamina") ~= false then
 					STAMINA_VISUAL_MAX)
 		else
 			local meta = player:get_meta()
+
 			meta:set_string("stamina:level", level)
 		end
 
@@ -605,7 +607,8 @@ and minetest.setting_get("enable_stamina") ~= false then
 		exhaust_player(player, STAMINA_EXHAUST_CRAFT)
 	end)
 
-	minetest.register_on_punchplayer(function(player, hitter, time_from_last_punch, tool_capabilities, dir, damage)
+	minetest.register_on_punchplayer(function(player, hitter, time_from_last_punch,
+			tool_capabilities, dir, damage)
 		exhaust_player(hitter, STAMINA_EXHAUST_PUNCH)
 	end)
 
