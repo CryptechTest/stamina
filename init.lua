@@ -290,15 +290,18 @@ local function stamina_globaltimer(dtime)
 
 			local controls = player:get_player_control()
 
-			-- Determine if the player is walking
-			if controls.jump then
-				exhaust_player(player, STAMINA_EXHAUST_JUMP)
+			-- Determine if the player is walking or jumping
+			if controls then
 
-			elseif controls.up
-			or controls.down
-			or controls.left
-			or controls.right then
-				exhaust_player(player, STAMINA_EXHAUST_MOVE)
+				if controls.jump then
+					exhaust_player(player, STAMINA_EXHAUST_JUMP)
+
+				elseif controls.up
+				or controls.down
+				or controls.left
+				or controls.right then
+					exhaust_player(player, STAMINA_EXHAUST_MOVE)
+				end
 			end
 
 			--- START sprint
@@ -309,7 +312,7 @@ local function stamina_globaltimer(dtime)
 				-- check if player can sprint (stamina must be over 6 points)
 				if not stamina.players[name].poisoned
 				and not stamina.players[name].drunk
-				and controls.aux1 and controls.up
+				and controls and controls.aux1 and controls.up
 				and not minetest.check_player_privs(player, {fast = true})
 				and get_int_attribute(player) > 6 then
 
