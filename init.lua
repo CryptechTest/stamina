@@ -493,6 +493,13 @@ function stamina.eat(hp_change, replace_with_item, itemstack, user, pointed_thin
 		texture = texture,
 	})
 
+	-- if player drinks bucket of milk then stop poison and being drunk
+	if itemstack:get_name() == "mobs:bucket_milk" then
+
+		stamina.players[name].poisoned = 0
+		stamina.players[name].drunk = 0
+	end
+
 	itemstack:take_item()
 
 	if replace_with_item then
