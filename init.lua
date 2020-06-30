@@ -223,6 +223,12 @@ local function stamina_globaltimer(dtime)
 			if stamina.players[name]
 			and stamina.players[name].drunk then
 
+-- play burp sound every 20 seconds when drunk
+local num = stamina.players[name].drunk
+if math.floor(num/20) == num/20 then
+	minetest.sound_play("stamina_burp", {to_player = name, gain = 0.7}, true)
+end
+
 				stamina.players[name].drunk = stamina.players[name].drunk - 1
 
 				if stamina.players[name].drunk < 1 then
@@ -469,11 +475,19 @@ function stamina.eat(hp_change, replace_with_item, itemstack, user, pointed_thin
 		stamina.players[name].poisoned = -hp_change
 	end
 
-	minetest.sound_play("stamina_eat", {to_player = name, gain = 0.7})
+	-- if {drink=1} group set then use sip sound instead of default eat
+	local snd = "stamina_eat"
+	local itemname = itemstack:get_name()
+	local def = minetest.registered_items[itemname]
+
+	if def and def.groups and def.groups.drink then
+		snd = "stamina_sip"
+	end
+
+	minetest.sound_play(snd, {to_player = name, gain = 0.7}, true)
 
 	-- particle effect when eating
 	local pos = user:get_pos() ; pos.y = pos.y + 1.5 -- mouth level
-	local itemname = itemstack:get_name()
 	local texture  = minetest.registered_items[itemname].inventory_image
 	local dir = user:get_look_dir()
 
