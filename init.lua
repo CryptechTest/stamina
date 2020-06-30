@@ -225,7 +225,7 @@ local function stamina_globaltimer(dtime)
 
 -- play burp sound every 20 seconds when drunk
 local num = stamina.players[name].drunk
-if math.floor(num/20) == num/20 then
+if num and num > 0 and math.floor(num / 20) == num / 20 then
 	minetest.sound_play("stamina_burp", {to_player = name, gain = 0.7}, true)
 end
 
@@ -508,7 +508,8 @@ function stamina.eat(hp_change, replace_with_item, itemstack, user, pointed_thin
 	})
 
 	-- if player drinks bucket of milk then stop poison and being drunk
-	if itemstack:get_name() == "mobs:bucket_milk" then
+	if itemstack:get_name() == "mobs:bucket_milk"
+	or itemstack:get_name() == "mobs:glass_milk" then
 
 		stamina.players[name].poisoned = 0
 		stamina.players[name].drunk = 0
