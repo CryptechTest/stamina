@@ -276,7 +276,8 @@ end
 					player:set_hp(hp, {poison = true})
 				end
 
-			elseif stamina.players[name].poisoned then
+			elseif stamina.players[name]
+			and stamina.players[name].poisoned then
 
 				player:hud_change(stamina.players[name].hud_id,
 					"text", "stamina_hud_fg.png")
