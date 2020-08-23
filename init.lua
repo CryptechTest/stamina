@@ -317,7 +317,8 @@ end
 				local name = player:get_player_name()
 
 				-- check if player can sprint (stamina must be over 6 points)
-				if not stamina.players[name].poisoned
+				if stamina.players[name]
+				and not stamina.players[name].poisoned
 				and not stamina.players[name].drunk
 				and controls and controls.aux1 and controls.up
 				and not minetest.check_player_privs(player, {fast = true})
