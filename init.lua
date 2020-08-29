@@ -168,7 +168,9 @@ local function set_sprinting(name, sprinting)
 			stamina.players[name].sprint = true
 		end
 
-	elseif sprinting == false and stamina.players[name].sprint then
+	elseif sprinting == false
+	and stamina.players[name]
+	and stamina.players[name].sprint then
 
 		if monoids then
 
