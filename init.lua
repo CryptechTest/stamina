@@ -63,12 +63,15 @@ local function stamina_update_level(player, level)
 		return
 	end
 
-	local meta = player:get_meta() ; if not meta then return end
+	local meta = player and player:get_meta() ; if not meta then return end
 
 	meta:set_string("stamina:level", level)
 
-	player:hud_change(stamina.players[player:get_player_name()].hud_id, "number",
-			math.min(STAMINA_VISUAL_MAX, level))
+	player:hud_change(
+		stamina.players[player:get_player_name()].hud_id,
+		"number",
+		math.min(STAMINA_VISUAL_MAX, level)
+	)
 end
 
 
