@@ -1,0 +1,5 @@
+sprint (Enable sprint) bool true
+
+sprint_particles (Enable sprint particles) bool true
+
+enable_stamina (Enable stamina/hunger) bool true

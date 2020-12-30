@@ -45,10 +45,12 @@ local function get_int_attribute(player)
 end
 
 
+local stamina_enabled = minetest.settings:get_bool("enable_stamina") ~= false
+
 local function stamina_update_level(player, level)
 
 	-- pipeworks fake player check
-	if not player.get_attribute then
+	if not player.get_attribute or not stamina_enabled then
 		return nil
 	end
 
@@ -129,8 +131,8 @@ end
 
 
 -- Sprint settings and function
-local enable_sprint = minetest.setting_getbool("sprint") ~= false
-local enable_sprint_particles = minetest.setting_getbool("sprint_particles") ~= false
+local enable_sprint = minetest.settings:get_bool("sprint") ~= false
+local enable_sprint_particles = minetest.settings:get_bool("sprint_particles") ~= false
 local monoids = minetest.get_modpath("player_monoids")
 local pova_mod = minetest.get_modpath("pova")
 
@@ -567,8 +569,8 @@ end
 
 
 -- stamina is disabled if damage is disabled
-if minetest.setting_getbool("enable_damage")
-and minetest.setting_get("enable_stamina") ~= false then
+if minetest.settings:get_bool("enable_damage")
+and minetest.settings:get_bool("enable_stamina") ~= false then
 
 	minetest.register_on_joinplayer(function(player)
 
