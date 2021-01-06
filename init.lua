@@ -1,7 +1,8 @@
 
 stamina = {players = {}}
 
-STAMINA_TICK = 800			-- time in seconds after that 1 stamina point is taken
+STAMINA_TICK = tonumber(minetest.settings:get("stamina_tick")) or 800
+							-- time in seconds after that 1 stamina point is taken
 STAMINA_TICK_MIN = 4		-- stamina ticks won't reduce stamina below this level
 STAMINA_HEALTH_TICK = 4		-- time in seconds after player gets healed/damaged
 STAMINA_MOVE_TICK = 0.5		-- time in seconds after the movement is checked
@@ -204,11 +205,7 @@ end
 
 
 -- Time based stamina functions
-local stamina_timer = 0
-local health_timer = 0
-local action_timer = 0
-local poison_timer = 0
-local drunk_timer = 0
+local stamina_timer, health_timer, action_timer, poison_timer, drunk_timer = 0,0,0,0,0
 
 local function stamina_globaltimer(dtime)
 
@@ -230,11 +227,13 @@ local function stamina_globaltimer(dtime)
 			if stamina.players[name]
 			and stamina.players[name].drunk then
 
--- play burp sound every 20 seconds when drunk
-local num = stamina.players[name].drunk
-if num and num > 0 and math.floor(num / 20) == num / 20 then
-	minetest.sound_play("stamina_burp", {to_player = name, gain = 0.7}, true)
-end
+				-- play burp sound every 20 seconds when drunk
+				local num = stamina.players[name].drunk
+
+				if num and num > 0 and math.floor(num / 20) == num / 20 then
+					minetest.sound_play("stamina_burp",
+							{to_player = name, gain = 0.7}, true)
+				end
 
 				stamina.players[name].drunk = stamina.players[name].drunk - 1
 
@@ -287,7 +286,7 @@ end
 			and stamina.players[name].poisoned then
 
 				player:hud_change(stamina.players[name].hud_id,
-					"text", "stamina_hud_fg.png")
+						"text", "stamina_hud_fg.png")
 
 				stamina.players[name].poisoned = nil
 			end
@@ -357,7 +356,7 @@ end
 						maxsize = 1.0,
 						vertical = false,
 						collisiondetection = false,
-						texture = "default_dirt.png",
+						texture = "default_dirt.png"
 					})
 
 						end
@@ -478,8 +477,7 @@ function stamina.eat(hp_change, replace_with_item, itemstack, user, pointed_thin
 	elseif hp_change < 0 then
 
 		-- assume hp_change < 0
-		user:hud_change(stamina.players[name].hud_id, "text",
-			"stamina_hud_poison.png")
+		user:hud_change(stamina.players[name].hud_id, "text", "stamina_hud_poison.png")
 
 		stamina.players[name].poisoned = -hp_change
 	end
@@ -513,12 +511,14 @@ function stamina.eat(hp_change, replace_with_item, itemstack, user, pointed_thin
 		maxexptime = 1,
 		minsize = 1,
 		maxsize = 2,
-		texture = texture,
+		texture = texture
 	})
 
-	-- if player drinks bucket of milk then stop poison and being drunk
-	if itemstack:get_name() == "mobs:bucket_milk"
-	or itemstack:get_name() == "mobs:glass_milk" then
+	-- if player drinks milk then stop poison and being drunk
+	local item_name = itemstack:get_name() or ""
+	if item_name == "mobs:bucket_milk"
+	or item_name == "mobs:glass_milk"
+	or item_name == "farming:soy_milk" then
 
 		stamina.players[name].poisoned = 0
 		stamina.players[name].drunk = 0
@@ -556,11 +556,11 @@ function stamina.eat(hp_change, replace_with_item, itemstack, user, pointed_thin
 			stamina.players[name].units = 0
 
 			user:hud_change(stamina.players[name].hud_id, "text",
-				"stamina_hud_poison.png")
+					"stamina_hud_poison.png")
 
 			minetest.chat_send_player(name,
 				minetest.get_color_escape_sequence("#1eff00")
-				.. "You suddenly feel tipsy!")
+						.. "You suddenly feel tipsy!")
 		end
 	end
 
@@ -615,8 +615,7 @@ and minetest.settings:get_bool("enable_stamina") ~= false then
 
 		if stamina.players[name].poisoned
 		or stamina.players[name].drunk then
-			player:hud_change(stamina.players[name].hud_id,
-				"text", "stamina_hud_fg.png")
+			player:hud_change(stamina.players[name].hud_id, "text", "stamina_hud_fg.png")
 		end
 
 		stamina.players[name].exhaustion = 0
