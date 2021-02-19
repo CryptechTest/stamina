@@ -31,7 +31,7 @@ SPRINT_DRAIN = 0.35			-- how fast to drain satation while sprinting (0-1)
 local function get_int_attribute(player)
 
 	-- pipeworks fake player check
-	if not player.get_attribute then
+	if not player or not player.get_attribute then
 		return nil
 	end
 
@@ -204,207 +204,62 @@ local function set_sprinting(name, sprinting)
 end
 
 
--- Time based stamina functions
-local stamina_timer, health_timer, action_timer, poison_timer, drunk_timer = 0,0,0,0,0
+local function drunk_tick()
 
-local function stamina_globaltimer(dtime)
+	for _,player in ipairs(minetest.get_connected_players()) do
 
-	stamina_timer = stamina_timer + dtime
-	health_timer = health_timer + dtime
-	action_timer = action_timer + dtime
-	poison_timer = poison_timer + dtime
-	drunk_timer = drunk_timer + dtime
+		local name = player:get_player_name()
 
-	local players = minetest.get_connected_players()
+		if name
+		and stamina.players[name]
+		and stamina.players[name].drunk then
 
-	-- simulate drunk walking (thanks LumberJ)
-	if drunk_timer > 1.0 then
+			-- play burp sound every 20 seconds when drunk
+			local num = stamina.players[name].drunk
 
-		for _,player in pairs(players) do
+			if num and num > 0 and math.floor(num / 20) == num / 20 then
+				minetest.sound_play("stamina_burp",
+						{to_player = name, gain = 0.7}, true)
+			end
 
-			local name = player:get_player_name()
+			stamina.players[name].drunk = stamina.players[name].drunk - 1
 
-			if stamina.players[name]
-			and stamina.players[name].drunk then
+			if stamina.players[name].drunk < 1 then
 
-				-- play burp sound every 20 seconds when drunk
-				local num = stamina.players[name].drunk
+				stamina.players[name].drunk = nil
+				stamina.players[name].units = 0
 
-				if num and num > 0 and math.floor(num / 20) == num / 20 then
-					minetest.sound_play("stamina_burp",
-							{to_player = name, gain = 0.7}, true)
-				end
-
-				stamina.players[name].drunk = stamina.players[name].drunk - 1
-
-				if stamina.players[name].drunk < 1 then
-
-					stamina.players[name].drunk = nil
-					stamina.players[name].units = 0
+				if not stamina.players[name].poisoned then
 
 					player:hud_change(stamina.players[name].hud_id,
-						"text", "stamina_hud_fg.png")
-				end
-
-				-- effect only works when not riding boat/cart/horse etc.
-				if not player:get_attach() then
-
-					local yaw = player:get_look_horizontal()
-
-					yaw = yaw + math.random(-0.5, 0.5)
-
-					player:set_look_horizontal(yaw)
+							"text", "stamina_hud_fg.png")
 				end
 			end
 
-			drunk_timer = 0
+			-- effect only works when not riding boat/cart/horse etc.
+			if not player:get_attach() then
+
+				local yaw = player:get_look_horizontal() + math.random(-0.5, 0.5)
+
+				player:set_look_horizontal(yaw)
+			end
 		end
 	end
+end
 
 
-	-- hurt player when poisoned
-	if poison_timer > STAMINA_POISON_TICK then
+local function health_tick()
 
-		for _,player in pairs(players) do
+	for _,player in ipairs(minetest.get_connected_players()) do
 
-			local name = player:get_player_name()
+		local air = player:get_breath() or 0
+		local hp = player:get_hp()
+		local h = get_int_attribute(player)
+		local name = player:get_player_name()
 
-			if stamina.players[name]
-			and stamina.players[name].poisoned
-			and stamina.players[name].poisoned > 0 then
+		if name then
 
-				stamina.players[name].poisoned =
-					stamina.players[name].poisoned - 1
-
-				local hp = player:get_hp() - 1
-
-				if hp > 0 then
-					player:set_hp(hp, {poison = true})
-				end
-
-			elseif stamina.players[name]
-			and stamina.players[name].poisoned then
-
-				player:hud_change(stamina.players[name].hud_id,
-						"text", "stamina_hud_fg.png")
-
-				stamina.players[name].poisoned = nil
-			end
-
-			poison_timer = 0
-		end
-	end
-
-
-		-- sprint control and particle animation
-	if action_timer > STAMINA_MOVE_TICK then
-
-		for _,player in pairs(players) do
-
-			local controls = player:get_player_control()
-
-			-- Determine if the player is walking or jumping
-			if controls then
-
-				if controls.jump then
-					exhaust_player(player, STAMINA_EXHAUST_JUMP)
-
-				elseif controls.up
-				or controls.down
-				or controls.left
-				or controls.right then
-					exhaust_player(player, STAMINA_EXHAUST_MOVE)
-				end
-			end
-
-			--- START sprint
-			if enable_sprint then
-
-				local name = player:get_player_name()
-
-				-- check if player can sprint (stamina must be over 6 points)
-				if stamina.players[name]
-				and not stamina.players[name].poisoned
-				and not stamina.players[name].drunk
-				and controls and controls.aux1 and controls.up
-				and not minetest.check_player_privs(player, {fast = true})
-				and get_int_attribute(player) > 6 then
-
-					set_sprinting(name, true)
-
-					-- create particles behind player when sprinting
-					if enable_sprint_particles then
-
-						local pos = player:get_pos()
-						local node = minetest.get_node({
-							x = pos.x, y = pos.y - 1, z = pos.z})
-
-						if node.name ~= "air" then
-
-					minetest.add_particlespawner({
-						amount = 5,
-						time = 0.01,
-						minpos = {x = pos.x - 0.25, y = pos.y + 0.1, z = pos.z - 0.25},
-						maxpos = {x = pos.x + 0.25, y = pos.y + 0.1, z = pos.z + 0.25},
-						minvel = {x = -0.5, y = 1, z = -0.5},
-						maxvel = {x = 0.5, y = 2, z = 0.5},
-						minacc = {x = 0, y = -5, z = 0},
-						maxacc = {x = 0, y = -12, z = 0},
-						minexptime = 0.25,
-						maxexptime = 0.5,
-						minsize = 0.5,
-						maxsize = 1.0,
-						vertical = false,
-						collisiondetection = false,
-						texture = "default_dirt.png"
-					})
-
-						end
-					end
-
-					-- Lower the player's stamina when sprinting
-					local level = get_int_attribute(player)
-
-					stamina_update_level(player,
-							level - (SPRINT_DRAIN * STAMINA_MOVE_TICK))
-				else
-					set_sprinting(name, false)
-				end
-			end
-			-- END sprint
-
-			action_timer = 0
-		end
-	end
-
-
-	-- lower saturation by 1 point after STAMINA_TICK
-	if stamina_timer > STAMINA_TICK then
-
-		for _,player in pairs(players) do
-
-			local h = get_int_attribute(player)
-
-			if h > STAMINA_TICK_MIN then
-				stamina_update_level(player, h - 1)
-			end
-
-			stamina_timer = 0
-		end
-	end
-
-
-	-- heal or damage player, depending on saturation
-	if health_timer > STAMINA_HEALTH_TICK then
-
-		for _,player in pairs(players) do
-
-			local air = player:get_breath() or 0
-			local hp = player:get_hp()
-			local h = get_int_attribute(player)
-			local name = player:get_player_name()
-
-			-- damage player by 1 hp if saturation is < 2 (of 30)
+			-- damage player by 1 hp if saturation is < 2
 			if h and h < STAMINA_STARVE_LVL
 			and hp > 0 then
 				player:set_hp(hp - STAMINA_STARVE, {hunger = true})
@@ -421,11 +276,179 @@ local function stamina_globaltimer(dtime)
 
 				stamina_update_level(player, h - 1)
 			end
-
-			health_timer = 0
 		end
 	end
+end
 
+
+local function action_tick()
+
+	for _,player in ipairs(minetest.get_connected_players()) do
+
+		local controls = player and player:get_player_control()
+
+		-- Determine if the player is walking or jumping
+		if controls then
+
+			if controls.jump then
+				exhaust_player(player, STAMINA_EXHAUST_JUMP)
+
+			elseif controls.up
+			or controls.down
+			or controls.left
+			or controls.right then
+				exhaust_player(player, STAMINA_EXHAUST_MOVE)
+			end
+		end
+
+		--- START sprint
+		if enable_sprint then
+
+			local name = player and player:get_player_name()
+
+			-- check if player can sprint (stamina must be over 6 points)
+			if name
+			and stamina.players[name]
+			and not stamina.players[name].poisoned
+			and not stamina.players[name].drunk
+			and controls and controls.aux1 and controls.up
+			and not minetest.check_player_privs(player, {fast = true})
+			and get_int_attribute(player) > 6 then
+
+				set_sprinting(name, true)
+
+				-- create particles behind player when sprinting
+				if enable_sprint_particles then
+
+					local pos = player:get_pos()
+					local node = minetest.get_node({
+						x = pos.x,
+						y = pos.y - 1,
+						z = pos.z
+					})
+
+					if node.name ~= "air" then
+
+						minetest.add_particlespawner({
+							amount = 5,
+							time = 0.01,
+							minpos = {x = pos.x - 0.25, y = pos.y + 0.1, z = pos.z - 0.25},
+							maxpos = {x = pos.x + 0.25, y = pos.y + 0.1, z = pos.z + 0.25},
+							minvel = {x = -0.5, y = 1, z = -0.5},
+							maxvel = {x = 0.5, y = 2, z = 0.5},
+							minacc = {x = 0, y = -5, z = 0},
+							maxacc = {x = 0, y = -12, z = 0},
+							minexptime = 0.25,
+							maxexptime = 0.5,
+							minsize = 0.5,
+							maxsize = 1.0,
+							vertical = false,
+							collisiondetection = false,
+							texture = "default_dirt.png"
+						})
+
+					end
+				end
+
+				-- Lower the player's stamina when sprinting
+				local level = get_int_attribute(player)
+
+				stamina_update_level(player,
+						level - (SPRINT_DRAIN * STAMINA_MOVE_TICK))
+
+			elseif name then
+				set_sprinting(name, false)
+			end
+		end
+		-- END sprint
+	end
+end
+
+
+local function poison_tick()
+
+	for _,player in ipairs(minetest.get_connected_players()) do
+
+		local name = player and player:get_player_name()
+
+		if name
+		and stamina.players[name]
+		and stamina.players[name].poisoned
+		and stamina.players[name].poisoned > 0 then
+
+			stamina.players[name].poisoned =
+				stamina.players[name].poisoned - 1
+
+			local hp = player:get_hp() - 1
+
+			if hp > 0 then
+				player:set_hp(hp, {poison = true})
+			end
+
+		elseif name
+		and stamina.players[name]
+		and stamina.players[name].poisoned then
+
+			if not stamina.players[name].drunk then
+
+				player:hud_change(stamina.players[name].hud_id,
+						"text", "stamina_hud_fg.png")
+			end
+
+			stamina.players[name].poisoned = nil
+		end
+	end
+end
+
+
+local function stamina_tick()
+
+	for _,player in ipairs(minetest.get_connected_players()) do
+
+		local h = get_int_attribute(player)
+
+		if h and h > STAMINA_TICK_MIN then
+			stamina_update_level(player, h - 1)
+		end
+	end
+end
+
+
+-- Time based stamina functions
+local stamina_timer, health_timer, action_timer, poison_timer, drunk_timer = 0,0,0,0,0
+
+local function stamina_globaltimer(dtime)
+
+	stamina_timer = stamina_timer + dtime
+	health_timer = health_timer + dtime
+	action_timer = action_timer + dtime
+	poison_timer = poison_timer + dtime
+	drunk_timer = drunk_timer + dtime
+
+	-- simulate drunk walking (thanks LumberJ)
+	if drunk_timer > 1.0 then
+		drunk_tick() ; drunk_timer = 0
+	end
+
+	-- hurt player when poisoned
+	if poison_timer > STAMINA_POISON_TICK then
+		poison_tick() ; poison_timer = 0
+	end
+
+		-- sprint control and particle animation
+	if action_timer > STAMINA_MOVE_TICK then
+		action_tick() ; action_timer = 0
+	end
+
+	-- lower saturation by 1 point after STAMINA_TICK
+	if stamina_timer > STAMINA_TICK then
+		stamina_tick() ; stamina_timer = 0
+	end
+
+	-- heal or damage player, depending on saturation
+	if health_timer > STAMINA_HEALTH_TICK then
+		health_tick() ; health_timer = 0
+	end
 end
 
 
@@ -559,8 +582,8 @@ function stamina.eat(hp_change, replace_with_item, itemstack, user, pointed_thin
 					"stamina_hud_poison.png")
 
 			minetest.chat_send_player(name,
-				minetest.get_color_escape_sequence("#1eff00")
-						.. "You suddenly feel tipsy!")
+					minetest.get_color_escape_sequence("#1eff00")
+					.. "You suddenly feel tipsy!")
 		end
 	end
 
