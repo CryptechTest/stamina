@@ -517,7 +517,8 @@ function stamina.eat(hp_change, replace_with_item, itemstack, user, pointed_thin
 	minetest.sound_play(snd, {to_player = name, gain = 0.7}, true)
 
 	-- particle effect when eating
-	local pos = user:get_pos() ; pos.y = pos.y + 1.5 -- mouth level
+	local prop = user:get_properties()
+	local pos = user:get_pos() ; pos.y = pos.y + prop.eye_height -- mouth level
 	local texture  = minetest.registered_items[itemname].inventory_image
 	local dir = user:get_look_dir()
 
@@ -601,8 +602,7 @@ and minetest.settings:get_bool("enable_stamina") ~= false then
 
 		if get_int_attribute(player) then
 
-			level = math.min(get_int_attribute(player),
-					STAMINA_VISUAL_MAX)
+			level = math.min(get_int_attribute(player), STAMINA_VISUAL_MAX)
 		else
 			local meta = player:get_meta()
 
@@ -620,7 +620,7 @@ and minetest.settings:get_bool("enable_stamina") ~= false then
 			number = level,
 			alignment = {x = -1, y = -1},
 			offset = {x = -266, y = -110},
-			max = 0,
+			max = 0
 		})
 
 		stamina.players[name] = {
@@ -628,7 +628,7 @@ and minetest.settings:get_bool("enable_stamina") ~= false then
 			exhaustion = 0,
 			poisoned = nil,
 			drunk = nil,
-			sprint = nil,
+			sprint = nil
 		}
 	end)
 
@@ -675,7 +675,6 @@ else
 		stamina.players[player:get_player_name()] = {
 			poisoned = nil, sprint = nil, drunk = nil, exhaustion = 0}
 	end)
-
 end
 
 -- clear when player leaves
