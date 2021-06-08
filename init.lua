@@ -1,5 +1,5 @@
 
-stamina = {players = {}}
+stamina = {players = {}, mod = "redo"}
 
 STAMINA_TICK = tonumber(minetest.settings:get("stamina_tick")) or 800
 							-- time in seconds after that 1 stamina point is taken
@@ -681,3 +681,30 @@ end
 minetest.register_on_leaveplayer(function(player)
 	stamina.players[player:get_player_name()] = nil
 end)
+
+
+--lucky blocks (if damage and stamina active)
+if minetest.get_modpath("lucky_block")
+and minetest.settings:get_bool("enable_damage")
+and minetest.settings:get_bool("enable_stamina") ~= false then
+
+	local poison_me = function(pos, player, def)
+
+		local name = player:get_player_name()
+
+		player:hud_change(stamina.players[name].hud_id,
+				"text", "stamina_hud_poison.png")
+
+		stamina.players[name].poisoned = def.amount
+
+		local green = minetest.get_color_escape_sequence("#1eaa00")
+
+		minetest.chat_send_player(name,
+				green .. "Seems you have been poisoned!")
+	end
+
+	lucky_block:add_blocks({
+		{"cus", poison_me, {amount = 5} },
+		{"cus", poison_me, {amount = 10} },
+	})
+end
