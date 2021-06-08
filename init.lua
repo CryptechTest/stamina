@@ -688,23 +688,36 @@ if minetest.get_modpath("lucky_block")
 and minetest.settings:get_bool("enable_damage")
 and minetest.settings:get_bool("enable_stamina") ~= false then
 
-	local poison_me = function(pos, player, def)
+	local effect_me = function(pos, player, def)
 
+		local green = minetest.get_color_escape_sequence("#bada55")
 		local name = player:get_player_name()
 
-		player:hud_change(stamina.players[name].hud_id,
-				"text", "stamina_hud_poison.png")
+		if def.poison or def.drunk then
 
-		stamina.players[name].poisoned = def.amount
+			player:hud_change(stamina.players[name].hud_id,
+					"text", "stamina_hud_poison.png")
+		end
 
-		local green = minetest.get_color_escape_sequence("#1eaa00")
+		if def.poison and def.poison > 0 then
 
-		minetest.chat_send_player(name,
-				green .. "Seems you have been poisoned!")
+			stamina.players[name].poisoned = def.poison
+
+			minetest.chat_send_player(name,
+					green .. "Seems you have been poisoned!")
+
+		elseif def.drunk and def.drunk > 0 then
+
+			stamina.players[name].drunk = def.drunk
+
+			minetest.chat_send_player(name,
+					green .. "You seem a little tipsy!")
+		end
 	end
 
 	lucky_block:add_blocks({
-		{"cus", poison_me, {amount = 5} },
-		{"cus", poison_me, {amount = 10} },
+		{"cus", effect_me, {poison = 5} },
+		{"cus", effect_me, {poison = 10} },
+		{"cus", effect_me, {drunk = 30} },
 	})
 end
