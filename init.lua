@@ -204,6 +204,30 @@ local function set_sprinting(name, sprinting)
 end
 
 
+local function head_particle(player, texture)
+
+	local prop = player:get_properties()
+	local pos = player:get_pos() ; pos.y = pos.y + prop.eye_height -- mouth level
+	local dir = player:get_look_dir()
+
+
+	minetest.add_particlespawner({
+		amount = 5,
+		time = 0.1,
+		minpos = pos,
+		maxpos = pos,
+		minvel = {x = dir.x - 1, y = dir.y, z = dir.z - 1},
+		maxvel = {x = dir.x + 1, y = dir.y, z = dir.z + 1},
+		minacc = {x = 0, y = -5, z = 0},
+		maxacc = {x = 0, y = -9, z = 0},
+		minexptime = 1,
+		maxexptime = 1,
+		minsize = 1,
+		maxsize = 2,
+		texture = texture
+	})
+end
+
 local function drunk_tick()
 
 	for _,player in ipairs(minetest.get_connected_players()) do
@@ -218,6 +242,9 @@ local function drunk_tick()
 			local num = stamina.players[name].drunk
 
 			if num and num > 0 and math.floor(num / 20) == num / 20 then
+
+				head_particle(player, "bubble.png")
+
 				minetest.sound_play("stamina_burp",
 						{to_player = name, gain = 0.7}, true)
 			end
@@ -381,6 +408,8 @@ local function poison_tick()
 
 			local hp = player:get_hp() - 1
 
+			head_particle(player, "stamina_poison_particle.png")
+
 			if hp > 0 then
 				player:set_hp(hp, {poison = true})
 			end
@@ -517,26 +546,9 @@ function stamina.eat(hp_change, replace_with_item, itemstack, user, pointed_thin
 	minetest.sound_play(snd, {to_player = name, gain = 0.7}, true)
 
 	-- particle effect when eating
-	local prop = user:get_properties()
-	local pos = user:get_pos() ; pos.y = pos.y + prop.eye_height -- mouth level
 	local texture  = minetest.registered_items[itemname].inventory_image
-	local dir = user:get_look_dir()
 
-	minetest.add_particlespawner({
-		amount = 5,
-		time = 0.1,
-		minpos = pos,
-		maxpos = pos,
-		minvel = {x = dir.x - 1, y = dir.y, z = dir.z - 1},
-		maxvel = {x = dir.x + 1, y = dir.y, z = dir.z + 1},
-		minacc = {x = 0, y = -5, z = 0},
-		maxacc = {x = 0, y = -9, z = 0},
-		minexptime = 1,
-		maxexptime = 1,
-		minsize = 1,
-		maxsize = 2,
-		texture = texture
-	})
+	head_particle(user, texture)
 
 	-- if player drinks milk then stop poison and being drunk
 	local item_name = itemstack:get_name() or ""
