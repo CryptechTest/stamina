@@ -8,11 +8,11 @@ STAMINA_HEALTH_TICK = 4		-- time in seconds after player gets healed/damaged
 STAMINA_MOVE_TICK = 0.5		-- time in seconds after the movement is checked
 STAMINA_POISON_TICK = 1.25	-- time in seconds after player is poisoned
 
-STAMINA_EXHAUST_DIG = 3		-- exhaustion increased this value after digged node
+STAMINA_EXHAUST_DIG = 2		-- exhaustion increased this value after digged node
 STAMINA_EXHAUST_PLACE = 1	-- .. after digging node
 STAMINA_EXHAUST_MOVE = 1.5	-- .. if player movement detected
 STAMINA_EXHAUST_JUMP = 5	-- .. if jumping
-STAMINA_EXHAUST_CRAFT = 20	-- .. if player crafts
+STAMINA_EXHAUST_CRAFT = 2	-- .. if player crafts
 STAMINA_EXHAUST_PUNCH = 40	-- .. if player punches another player
 STAMINA_EXHAUST_LVL = 160	-- at what exhaustion player saturation gets lowered
 
