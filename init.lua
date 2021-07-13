@@ -18,7 +18,8 @@ STAMINA_EXHAUST_LVL = 160	-- at what exhaustion player saturation gets lowered
 
 STAMINA_HEAL = 1			-- number of HP player gets healed after STAMINA_HEALTH_TICK
 STAMINA_HEAL_LVL = 5		-- lower level of saturation needed to get healed
-STAMINA_STARVE = 1			-- number of HP player gets damaged by stamina after STAMINA_HEALTH_TICK
+STAMINA_STARVE = 1			-- number of HP player gets damaged by stamina after
+							-- STAMINA_HEALTH_TICK
 STAMINA_STARVE_LVL = 3		-- level of staturation that causes starving
 
 STAMINA_VISUAL_MAX = 20		-- hud bar extends only to 20
