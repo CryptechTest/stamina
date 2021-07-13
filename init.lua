@@ -574,7 +574,7 @@ function stamina.eat(hp_change, replace_with_item, itemstack, user, pointed_thin
 			else
 				local pos = user:get_pos()
 
-				core.add_item(pos, replace_with_item)
+				if pos then core.add_item(pos, replace_with_item) end
 			end
 		end
 	end
