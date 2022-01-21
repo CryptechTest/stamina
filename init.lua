@@ -181,7 +181,7 @@ local function set_sprinting(name, sprinting)
 
 		if monoids then
 
-			player_monoids.speed:del_change(player, stamina.players[name].speed)
+			player_monoids.speed:del_change(player, stamina.players[name].sprint)
 			player_monoids.jump:del_change(player, stamina.players[name].jump)
 
 			stamina.players[name].sprint = nil
