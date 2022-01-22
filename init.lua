@@ -141,7 +141,7 @@ local pova_mod = minetest.get_modpath("pova")
 
 local function set_sprinting(name, sprinting)
 
-	local player = minetest.get_player_by_name(name)
+	local player = minetest.get_player_by_name(name) ; if not player then return end
 
 	-- get player physics
 	local def = player:get_physics_override()
@@ -207,8 +207,10 @@ end
 
 local function head_particle(player, texture)
 
+	if not player then return end
+
 	local prop = player:get_properties()
-	local pos = player:get_pos() ; pos.y = pos.y + prop.eye_height -- mouth level
+	local pos = player:get_pos() ; pos.y = pos.y + (prop.eye_height or 1.23) -- mouth level
 	local dir = player:get_look_dir()
 
 
@@ -280,12 +282,13 @@ local function health_tick()
 
 	for _,player in ipairs(minetest.get_connected_players()) do
 
-		local air = player:get_breath() or 0
-		local hp = player:get_hp()
-		local h = get_int_attribute(player)
 		local name = player:get_player_name()
 
 		if name then
+
+			local air = player:get_breath() or 0
+			local hp = player:get_hp()
+			local h = get_int_attribute(player)
 
 			-- damage player by 1 hp if saturation is < 2
 			if h and h < STAMINA_STARVE_LVL
@@ -435,7 +438,7 @@ local function stamina_tick()
 
 	for _,player in ipairs(minetest.get_connected_players()) do
 
-		local h = get_int_attribute(player)
+		local h = player and get_int_attribute(player)
 
 		if h and h > STAMINA_TICK_MIN then
 			stamina_update_level(player, h - 1)
@@ -612,6 +615,8 @@ and minetest.settings:get_bool("enable_stamina") ~= false then
 
 	minetest.register_on_joinplayer(function(player)
 
+		if not player then return end
+
 		local level = STAMINA_VISUAL_MAX -- TODO
 
 		if get_int_attribute(player) then
@@ -648,7 +653,7 @@ and minetest.settings:get_bool("enable_stamina") ~= false then
 
 	minetest.register_on_respawnplayer(function(player)
 
-		local name = player:get_player_name()
+		local name = player:get_player_name() ; if not name then return end
 
 		if stamina.players[name].poisoned
 		or stamina.players[name].drunk then
@@ -686,14 +691,18 @@ else
 
 	-- create player table on join
 	minetest.register_on_joinplayer(function(player)
-		stamina.players[player:get_player_name()] = {
-			poisoned = nil, sprint = nil, drunk = nil, exhaustion = 0}
+		if player then
+			stamina.players[player:get_player_name()] = {
+				poisoned = nil, sprint = nil, drunk = nil, exhaustion = 0}
+		end
 	end)
 end
 
 -- clear when player leaves
 minetest.register_on_leaveplayer(function(player)
-	stamina.players[player:get_player_name()] = nil
+	if player then
+		stamina.players[player:get_player_name()] = nil
+	end
 end)
 
 
@@ -705,7 +714,7 @@ and minetest.settings:get_bool("enable_stamina") ~= false then
 	local effect_me = function(pos, player, def)
 
 		local green = minetest.get_color_escape_sequence("#bada55")
-		local name = player:get_player_name()
+		local name = player:get_player_name() ; if not name then return end
 
 		if def.poison or def.drunk then
 
@@ -732,6 +741,6 @@ and minetest.settings:get_bool("enable_stamina") ~= false then
 	lucky_block:add_blocks({
 		{"cus", effect_me, {poison = 5} },
 		{"cus", effect_me, {poison = 10} },
-		{"cus", effect_me, {drunk = 30} },
+		{"cus", effect_me, {drunk = 30} }
 	})
 end
