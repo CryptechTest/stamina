@@ -706,41 +706,12 @@ minetest.register_on_leaveplayer(function(player)
 end)
 
 
---lucky blocks (if damage and stamina active)
+-- add lucky blocks (if damage and stamina active)
 if minetest.get_modpath("lucky_block")
 and minetest.settings:get_bool("enable_damage")
 and minetest.settings:get_bool("enable_stamina") ~= false then
 
-	local effect_me = function(pos, player, def)
+	local MP = minetest.get_modpath(minetest.get_current_modname())
 
-		local green = minetest.get_color_escape_sequence("#bada55")
-		local name = player:get_player_name() ; if not name then return end
-
-		if def.poison or def.drunk then
-
-			player:hud_change(stamina.players[name].hud_id,
-					"text", "stamina_hud_poison.png")
-		end
-
-		if def.poison and def.poison > 0 then
-
-			stamina.players[name].poisoned = def.poison
-
-			minetest.chat_send_player(name,
-					green .. "Seems you have been poisoned!")
-
-		elseif def.drunk and def.drunk > 0 then
-
-			stamina.players[name].drunk = def.drunk
-
-			minetest.chat_send_player(name,
-					green .. "You seem a little tipsy!")
-		end
-	end
-
-	lucky_block:add_blocks({
-		{"cus", effect_me, {poison = 5} },
-		{"cus", effect_me, {poison = 10} },
-		{"cus", effect_me, {drunk = 30} }
-	})
+	dofile(MP .. "/lucky_block.lua")
 end
