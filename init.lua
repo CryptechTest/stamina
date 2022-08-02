@@ -485,133 +485,131 @@ local function stamina_globaltimer(dtime)
 end
 
 
--- override core.do_item_eat() so we can redirect hp_change to stamina
-core.do_item_eat = function(hp_change, replace_with_item, itemstack, user, pointed_thing)
-
-	if user.is_fake_player then
-		return -- abort if called by fake player (eg. pipeworks-wielder)
-	end
-
-	local old_itemstack = itemstack
-
-	itemstack = stamina.eat(
-			hp_change, replace_with_item, itemstack, user, pointed_thing)
-
-	for _, callback in pairs(core.registered_on_item_eats) do
-
-		local result = callback(hp_change, replace_with_item, itemstack, user,
-				pointed_thing, old_itemstack)
-
-		if result then
-			return result
-		end
-	end
-
-	return itemstack
-end
-
-
--- not local since it's called from within core context
-function stamina.eat(hp_change, replace_with_item, itemstack, user, pointed_thing)
-
-	if not itemstack or not user then
-		return itemstack
-	end
-
-	local level = get_int_attribute(user) or 0
-
-	if level >= STAMINA_VISUAL_MAX then
-		return itemstack
-	end
-
-	local name = user:get_player_name()
-
-	if hp_change > 0 then
-
-		stamina_update_level(user, level + hp_change)
-
-	elseif hp_change < 0 then
-
-		-- assume hp_change < 0
-		user:hud_change(stamina.players[name].hud_id, "text", "stamina_hud_poison.png")
-
-		stamina.players[name].poisoned = -hp_change
-	end
-
-	-- if {drink=1} group set then use sip sound instead of default eat
-	local snd = "stamina_eat"
-	local itemname = itemstack:get_name()
-	local def = minetest.registered_items[itemname]
-
-	if def and def.groups and def.groups.drink then
-		snd = "stamina_sip"
-	end
-
-	minetest.sound_play(snd, {to_player = name, gain = 0.7}, true)
-
-	-- particle effect when eating
-	local texture  = minetest.registered_items[itemname].inventory_image
-
-	head_particle(user, texture)
-
-	-- if player drinks milk then stop poison and being drunk
-	local item_name = itemstack:get_name() or ""
-	if item_name == "mobs:bucket_milk"
-	or item_name == "mobs:glass_milk"
-	or item_name == "farming:soy_milk" then
-
-		stamina.players[name].poisoned = 0
-		stamina.players[name].drunk = 0
-	end
-
-	itemstack:take_item()
-
-	if replace_with_item then
-
-		if itemstack:is_empty() then
-			itemstack:add_item(replace_with_item)
-		else
-			local inv = user:get_inventory()
-
-			if inv:room_for_item("main", {name = replace_with_item}) then
-				inv:add_item("main", replace_with_item)
-			else
-				local pos = user:get_pos()
-
-				if pos then core.add_item(pos, replace_with_item) end
-			end
-		end
-	end
-
-	-- check for alcohol
-	local units = minetest.registered_items[itemname].groups
-			and minetest.registered_items[itemname].groups.alcohol or 0
-
-	if units > 0 then
-
-		stamina.players[name].units = (stamina.players[name].units or 0) + 1
-
-		if stamina.players[name].units > 3 then
-
-			stamina.players[name].drunk = 60
-			stamina.players[name].units = 0
-
-			user:hud_change(stamina.players[name].hud_id, "text",
-					"stamina_hud_poison.png")
-
-			minetest.chat_send_player(name,
-					minetest.get_color_escape_sequence("#1eff00")
-					.. "You suddenly feel tipsy!")
-		end
-	end
-
-	return itemstack
-end
-
-
--- stamina is disabled if damage is disabled
+-- stamina and eating functions disabled if damage is disabled
 if minetest.settings:get_bool("enable_damage")
 and minetest.settings:get_bool("enable_stamina") ~= false then
+
+	-- override core.do_item_eat() so we can redirect hp_change to stamina
+	core.do_item_eat = function(hp_change, replace_with_item, itemstack, user, pointed_thing)
+
+		if user.is_fake_player then
+			return -- abort if called by fake player (eg. pipeworks-wielder)
+		end
+
+		local old_itemstack = itemstack
+
+		itemstack = stamina.eat(
+				hp_change, replace_with_item, itemstack, user, pointed_thing)
+
+		for _, callback in pairs(core.registered_on_item_eats) do
+
+			local result = callback(hp_change, replace_with_item, itemstack, user,
+					pointed_thing, old_itemstack)
+
+			if result then
+				return result
+			end
+		end
+
+		return itemstack
+	end
+
+	-- not local since it's called from within core context
+	function stamina.eat(hp_change, replace_with_item, itemstack, user, pointed_thing)
+
+		if not itemstack or not user then
+			return itemstack
+		end
+
+		local level = get_int_attribute(user) or 0
+
+		if level >= STAMINA_VISUAL_MAX then
+			return itemstack
+		end
+
+		local name = user:get_player_name()
+
+		if hp_change > 0 then
+
+			stamina_update_level(user, level + hp_change)
+
+		elseif hp_change < 0 then
+
+			-- assume hp_change < 0
+			user:hud_change(stamina.players[name].hud_id, "text", "stamina_hud_poison.png")
+
+			stamina.players[name].poisoned = -hp_change
+		end
+
+		-- if {drink=1} group set then use sip sound instead of default eat
+		local snd = "stamina_eat"
+		local itemname = itemstack:get_name()
+		local def = minetest.registered_items[itemname]
+
+		if def and def.groups and def.groups.drink then
+			snd = "stamina_sip"
+		end
+
+		minetest.sound_play(snd, {to_player = name, gain = 0.7}, true)
+
+		-- particle effect when eating
+		local texture  = minetest.registered_items[itemname].inventory_image
+
+		head_particle(user, texture)
+
+		-- if player drinks milk then stop poison and being drunk
+		local item_name = itemstack:get_name() or ""
+		if item_name == "mobs:bucket_milk"
+		or item_name == "mobs:glass_milk"
+		or item_name == "farming:soy_milk" then
+
+			stamina.players[name].poisoned = 0
+			stamina.players[name].drunk = 0
+		end
+
+		itemstack:take_item()
+
+		if replace_with_item then
+
+			if itemstack:is_empty() then
+				itemstack:add_item(replace_with_item)
+			else
+				local inv = user:get_inventory()
+
+				if inv:room_for_item("main", {name = replace_with_item}) then
+					inv:add_item("main", replace_with_item)
+				else
+					local pos = user:get_pos()
+
+					if pos then core.add_item(pos, replace_with_item) end
+				end
+			end
+		end
+
+		-- check for alcohol
+		local units = minetest.registered_items[itemname].groups
+				and minetest.registered_items[itemname].groups.alcohol or 0
+
+		if units > 0 then
+
+			stamina.players[name].units = (stamina.players[name].units or 0) + 1
+
+			if stamina.players[name].units > 3 then
+
+				stamina.players[name].drunk = 60
+				stamina.players[name].units = 0
+
+				user:hud_change(stamina.players[name].hud_id, "text",
+						"stamina_hud_poison.png")
+
+				minetest.chat_send_player(name,
+						minetest.get_color_escape_sequence("#1eff00")
+						.. "You suddenly feel tipsy!")
+			end
+		end
+
+		return itemstack
+	end
 
 	minetest.register_on_joinplayer(function(player)
 
