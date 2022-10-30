@@ -555,6 +555,8 @@ and minetest.settings:get_bool("enable_stamina") ~= false then
 		-- particle effect when eating
 		local texture  = minetest.registered_items[itemname].inventory_image
 
+		texture = texture or minetest.registered_items[itemname].wield_image
+
 		head_particle(user, texture)
 
 		-- if player drinks milk then stop poison and being drunk
