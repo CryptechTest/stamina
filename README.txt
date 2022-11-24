@@ -71,4 +71,6 @@ Textures:
 Sounds (CC-BY-3.0):
 - stamina_eat.*.ogg - http://www.freesound.org/people/sonictechtonic/sounds/242215/
 - stamina_burp.ogg - https://www.freesfx.co.uk/sfx/burp (small burp)
-- stamina_sip.ogg - https://elements.envato.com/sip-16081-C7V5YLG
+
+Sounds (Attribution 3.0):
+- stamina_sip.ogg - https://freesound.org/people/Stevious42/sounds/259640/
