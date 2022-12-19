@@ -715,3 +715,6 @@ and minetest.settings:get_bool("enable_stamina") ~= false then
 
 	dofile(MP .. "/lucky_block.lua")
 end
+
+
+print("[MOD] Stamina loaded")
