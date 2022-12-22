@@ -36,7 +36,7 @@ SPRINT_JUMP  = clamp(tonumber(minetest.settings:get("stamina_sprint_jump")) or 0
 -- how fast to drain satation while sprinting (0-1)
 SPRINT_DRAIN  = clamp(tonumber(minetest.settings:get("stamina_sprint_drain")) or 0.35, 0.0, 1.0)
 
-print("=====", SPRINT_SPEED, SPRINT_JUMP, SPRINT_DRAIN)
+
 local function get_int_attribute(player)
 
 	-- pipeworks fake player check
