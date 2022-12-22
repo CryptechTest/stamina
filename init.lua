@@ -24,11 +24,19 @@ STAMINA_STARVE_LVL = 3		-- level of staturation that causes starving
 
 STAMINA_VISUAL_MAX = 20		-- hud bar extends only to 20
 
-SPRINT_SPEED = 0.3			-- how much faster player can run if satiated
-SPRINT_JUMP = 0.1			-- how much higher player can jump if satiated
-SPRINT_DRAIN = 0.35			-- how fast to drain satation while sprinting (0-1)
 
+local function clamp(val, minval, maxval)
+	return math.max(math.min(val, maxval), minval)
+end
 
+-- how much faster players can run if satiated.
+SPRINT_SPEED = clamp(tonumber(minetest.settings:get("stamina_sprint_speed")) or 0.3, 0.0, 1.0)
+-- how much higher player can jump if satiated
+SPRINT_JUMP  = clamp(tonumber(minetest.settings:get("stamina_sprint_jump")) or 0.1, 0.0, 1.0)
+-- how fast to drain satation while sprinting (0-1)
+SPRINT_DRAIN  = clamp(tonumber(minetest.settings:get("stamina_sprint_drain")) or 0.35, 0.0, 1.0)
+
+print("=====", SPRINT_SPEED, SPRINT_JUMP, SPRINT_DRAIN)
 local function get_int_attribute(player)
 
 	-- pipeworks fake player check

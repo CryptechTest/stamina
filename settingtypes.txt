@@ -5,3 +5,9 @@ sprint_particles (Enable sprint particles) bool true
 enable_stamina (Enable stamina/hunger) bool true
 
 stamina_tick (Time in seconds after which 1 saturation point is taken) float 800
+
+stamina_sprint_speed (Extra sprint speed - 0.0 to 1.0) float 0.3
+
+stamina_sprint_jump (Extra sprint jump height - 0.0 to 1.0) float 0.1
+
+stamina_sprint_drain (Sprint stamina drain - 0.0 to 1.0) float 0.35
