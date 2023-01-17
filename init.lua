@@ -56,6 +56,8 @@ end
 
 
 local stamina_enabled = minetest.settings:get_bool("enable_stamina") ~= false
+local damage_enabled = minetest.settings:get_bool("enable_damage")
+
 
 local function stamina_update_level(player, level)
 
@@ -92,7 +94,7 @@ stamina.change = function(player, change)
 
 	local name = player:get_player_name()
 
-	if not name or not change or change == 0 then
+	if not damage_enabled or not name or not change or change == 0 then
 		return false
 	end
 
@@ -494,8 +496,7 @@ end
 
 
 -- stamina and eating functions disabled if damage is disabled
-if minetest.settings:get_bool("enable_damage")
-and minetest.settings:get_bool("enable_stamina") ~= false then
+if damage_enabled and minetest.settings:get_bool("enable_stamina") ~= false then
 
 	-- override core.do_item_eat() so we can redirect hp_change to stamina
 	core.do_item_eat = function(hp_change, replace_with_item, itemstack, user, pointed_thing)
