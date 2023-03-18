@@ -79,13 +79,17 @@ local function stamina_update_level(player, level)
 
 	local meta = player and player:get_meta() ; if not meta then return end
 
-	meta:set_string("stamina:level", level)
+	meta:set_string("stamina:level", math.min(STAMINA_VISUAL_MAX, level))
 
-	player:hud_change(
-		stamina.players[player:get_player_name()].hud_id,
-		"number",
-		math.min(STAMINA_VISUAL_MAX, level)
-	)
+	if minetest.get_modpath("hudbars") then 
+		update_hud(player, math.min(STAMINA_VISUAL_MAX, level)) 
+	else 
+		player:hud_change(
+			stamina.players[player:get_player_name()].hud_id,
+			"number",
+			math.min(STAMINA_VISUAL_MAX, math.min(STAMINA_VISUAL_MAX, level))
+		)
+	end
 end
 
 
@@ -147,7 +151,6 @@ local enable_sprint = minetest.settings:get_bool("sprint") ~= false
 local enable_sprint_particles = minetest.settings:get_bool("sprint_particles") ~= false
 local monoids = minetest.get_modpath("player_monoids")
 local pova_mod = minetest.get_modpath("pova")
-
 
 local function set_sprinting(name, sprinting)
 
@@ -270,9 +273,11 @@ local function drunk_tick()
 				stamina.players[name].units = 0
 
 				if not stamina.players[name].poisoned then
-
-					player:hud_change(stamina.players[name].hud_id,
-							"text", "stamina_hud_fg.png")
+					if minetest.get_modpath("hudbars") then
+					else
+						player:hud_change(stamina.players[name].hud_id,
+						"text", "stamina_hud_fg.png")
+					end
 				end
 			end
 
@@ -433,9 +438,11 @@ local function poison_tick()
 		and stamina.players[name].poisoned then
 
 			if not stamina.players[name].drunk then
-
+				if minetest.get_modpath("hudbars") then
+				else
 				player:hud_change(stamina.players[name].hud_id,
-						"text", "stamina_hud_fg.png")
+				"text", "stamina_hud_fg.png")
+				end
 			end
 
 			stamina.players[name].poisoned = nil
@@ -545,7 +552,10 @@ if damage_enabled and minetest.settings:get_bool("enable_stamina") ~= false then
 		elseif hp_change < 0 then
 
 			-- assume hp_change < 0
-			user:hud_change(stamina.players[name].hud_id, "text", "stamina_hud_poison.png")
+			if minetest.get_modpath("hudbars") then
+			else
+				user:hud_change(stamina.players[name].hud_id, "text", "stamina_hud_poison.png")
+			end
 
 			stamina.players[name].poisoned = -hp_change
 		end
@@ -609,10 +619,11 @@ if damage_enabled and minetest.settings:get_bool("enable_stamina") ~= false then
 
 				stamina.players[name].drunk = 60
 				stamina.players[name].units = 0
-
+				if minetest.get_modpath("hudbars") then
+				else
 				user:hud_change(stamina.players[name].hud_id, "text",
-						"stamina_hud_poison.png")
-
+				"stamina_hud_poison.png")
+				end
 				minetest.chat_send_player(name,
 						minetest.get_color_escape_sequence("#1eff00")
 						.. "You suddenly feel tipsy!")
@@ -639,17 +650,17 @@ if damage_enabled and minetest.settings:get_bool("enable_stamina") ~= false then
 
 		local name = player:get_player_name()
 
-		local id = player:hud_add({
-			name = "stamina",
-			hud_elem_type = "statbar",
-			position = {x = 0.5, y = 1},
-			size = {x = 24, y = 24},
-			text = "stamina_hud_fg.png",
-			number = level,
-			alignment = {x = -1, y = -1},
-			offset = {x = -266, y = -110},
-			max = 0
-		})
+		--local id = player:hud_add({
+		--	name = "stamina",
+		--	hud_elem_type = "statbar",
+		--	position = {x = 0.5, y = 1},
+		--	size = {x = 24, y = 24},
+		--	text = "stamina_hud_fg.png",
+		--	number = level,
+		--	alignment = {x = -1, y = -1},
+		--	offset = {x = -266, y = -110},
+		--	max = 0
+		--})
 
 		stamina.players[name] = {
 			hud_id = id,
@@ -658,6 +669,8 @@ if damage_enabled and minetest.settings:get_bool("enable_stamina") ~= false then
 			drunk = nil,
 			sprint = nil
 		}
+		custom_hud(player)
+
 	end)
 
 	minetest.register_on_respawnplayer(function(player)
@@ -666,7 +679,10 @@ if damage_enabled and minetest.settings:get_bool("enable_stamina") ~= false then
 
 		if stamina.players[name].poisoned
 		or stamina.players[name].drunk then
-			player:hud_change(stamina.players[name].hud_id, "text", "stamina_hud_fg.png")
+			if minetest.get_modpath("hudbars") then
+			else
+				player:hud_change(stamina.players[name].hud_id, "text", "stamina_hud_fg.png")
+			end
 		end
 
 		stamina.players[name].exhaustion = 0
@@ -723,6 +739,23 @@ and minetest.settings:get_bool("enable_stamina") ~= false then
 	local MP = minetest.get_modpath(minetest.get_current_modname())
 
 	dofile(MP .. "/lucky_block.lua")
+end
+
+function update_hud(player, s)
+	hb.change_hudbar(player, "stamina", math.min(STAMINA_VISUAL_MAX, s))	
+end
+
+function custom_hud(player)
+	local level = get_int_attribute(player)
+	hb.init_hudbar(player, "stamina", math.min(STAMINA_VISUAL_MAX, level), 20, false)
+end
+
+if minetest.get_modpath("hudbars") then
+	local S = minetest.get_translator("hudbars")
+	
+	hb.register_hudbar("stamina", 0xFFFFFF, S("Stamina"), { bar = "hudbars_bar_stamina.png" }, 20, 20, false)
+else
+
 end
 
 
