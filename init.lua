@@ -689,10 +689,29 @@ if damage_enabled and minetest.settings:get_bool("enable_stamina") ~= false then
 		stamina.players[name].poisoned = nil
 		stamina.players[name].drunk = nil
 		stamina.players[name].sprint = nil
-		set_sprinting(name, false)
-		player:set_physics_override({
-            speed = 1
-        })
+		if monoids then
+
+			player_monoids.speed:del_change(player, stamina.players[name].sprint)
+			player_monoids.jump:del_change(player, stamina.players[name].jump)
+
+			stamina.players[name].sprint = nil
+			stamina.players[name].jump = nil
+
+		elseif pova_mod then
+
+			pova.del_override(name, "sprint")
+			pova.do_override(player)
+
+			stamina.players[name].sprint = nil
+		else
+			local def = player:get_physics_override()
+			player:set_physics_override({
+				speed = def.speed - SPRINT_SPEED,
+				jump = def.jump - SPRINT_JUMP,
+			})
+
+			stamina.players[name].sprint = nil
+		end
 		stamina_update_level(player, STAMINA_VISUAL_MAX)
 	end)
 
