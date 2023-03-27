@@ -688,8 +688,8 @@ if damage_enabled and minetest.settings:get_bool("enable_stamina") ~= false then
 		
 		if monoids then
 
-			player_monoids.speed:del_change(player, stamina.players[name].sprint)
-			player_monoids.jump:del_change(player, stamina.players[name].jump)
+			if stamina.players[name].sprint ~= nil then player_monoids.speed:del_change(player, stamina.players[name].sprint) end
+			if stamina.players[name].sprint ~= nil player_monoids.jump:del_change(player, stamina.players[name].jump)
 
 			stamina.players[name].sprint = nil
 			stamina.players[name].jump = nil
