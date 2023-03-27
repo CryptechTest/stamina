@@ -690,6 +690,9 @@ if damage_enabled and minetest.settings:get_bool("enable_stamina") ~= false then
 		stamina.players[name].drunk = nil
 		stamina.players[name].sprint = nil
 		set_sprinting(name, false)
+		player:set_physics_override({
+            speed = 1
+        })
 		stamina_update_level(player, STAMINA_VISUAL_MAX)
 	end)
 
