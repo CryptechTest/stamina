@@ -166,10 +166,10 @@ local function set_sprinting(name, sprinting)
 		if monoids then
 
 			stamina.players[name].sprint = player_monoids.speed:add_change(
-					player, def.speed + SPRINT_SPEED)
+					player, math.min(def.speed, 1) + SPRINT_SPEED)
 
 			stamina.players[name].jump = player_monoids.jump:add_change(
-					player, def.jump + SPRINT_JUMP)
+					player, math.min(def.speed, 1) + SPRINT_JUMP)
 
 		elseif pova_mod then
 
@@ -181,8 +181,8 @@ local function set_sprinting(name, sprinting)
 			stamina.players[name].sprint = true
 		else
 			player:set_physics_override({
-				speed = def.speed + SPRINT_SPEED,
-				jump = def.jump + SPRINT_JUMP,
+				speed = math.min(def.speed, 1) + SPRINT_SPEED,
+				jump = math.min(def.speed, 1)+ SPRINT_JUMP,
 			})
 
 			stamina.players[name].sprint = true
@@ -208,8 +208,8 @@ local function set_sprinting(name, sprinting)
 			stamina.players[name].sprint = nil
 		else
 			player:set_physics_override({
-				speed = def.speed - SPRINT_SPEED,
-				jump = def.jump - SPRINT_JUMP,
+				speed = 1,
+				jump = 1,
 			})
 
 			stamina.players[name].sprint = nil
