@@ -721,6 +721,12 @@ else
 				poisoned = nil, sprint = nil, drunk = nil, exhaustion = 0}
 		end
 	end)
+	minetest.register_on_respawnplayer(function(player)
+		if player then
+			stamina.players[player:get_player_name()] = {
+				poisoned = nil, sprint = nil, drunk = nil, exhaustion = 0}
+		end
+	end)
 end
 
 -- clear when player leaves
