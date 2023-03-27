@@ -685,10 +685,7 @@ if damage_enabled and minetest.settings:get_bool("enable_stamina") ~= false then
 			end
 		end
 
-		stamina.players[name].exhaustion = 0
-		stamina.players[name].poisoned = nil
-		stamina.players[name].drunk = nil
-		stamina.players[name].sprint = nil
+		
 		if monoids then
 
 			player_monoids.speed:del_change(player, stamina.players[name].sprint)
@@ -712,6 +709,10 @@ if damage_enabled and minetest.settings:get_bool("enable_stamina") ~= false then
 
 			stamina.players[name].sprint = nil
 		end
+		stamina.players[name].exhaustion = 0
+		stamina.players[name].poisoned = nil
+		stamina.players[name].drunk = nil
+		stamina.players[name].sprint = nil
 		stamina_update_level(player, STAMINA_VISUAL_MAX)
 	end)
 
