@@ -263,7 +263,7 @@ local function drunk_tick()
 			end
 
 			-- effect only works when not riding boat/cart/horse etc.
-			if not player:get_attach() then
+			if num > 0 and not player:get_attach() then
 				local yaw = player:get_look_horizontal() + math.random(-0.5, 0.5)
 
 				player:set_look_horizontal(yaw)
@@ -468,6 +468,7 @@ end
 -- stamina and eating functions disabled if damage is disabled
 if damage_enabled and minetest.settings:get_bool("enable_stamina") ~= false then
 	-- override core.do_item_eat() so we can redirect hp_change to stamina
+
 	core.do_item_eat = function(hp_change, replace_with_item, itemstack, user, pointed_thing)
 		if user.is_fake_player then
 			return -- abort if called by fake player (eg. pipeworks-wielder)
@@ -481,7 +482,6 @@ if damage_enabled and minetest.settings:get_bool("enable_stamina") ~= false then
 		for _, callback in pairs(core.registered_on_item_eats) do
 			local result = callback(hp_change, replace_with_item, itemstack, user,
 				pointed_thing, old_itemstack)
-
 			if result then
 				return result
 			end
@@ -543,24 +543,26 @@ if damage_enabled and minetest.settings:get_bool("enable_stamina") ~= false then
 			stamina.players[name].drunk = 0
 		end
 
-		itemstack:take_item()
-
-		if replace_with_item then
-			if itemstack:is_empty() then
-				itemstack:add_item(replace_with_item)
-			else
-				local inv = user:get_inventory()
-
-				if inv:room_for_item("main", { name = replace_with_item }) then
-					inv:add_item("main", replace_with_item)
+		if itemstack:take_item() ~= nil then
+			if replace_with_item then
+				if itemstack:is_empty() then
+					itemstack:add_item(replace_with_item)
 				else
-					local pos = user:get_pos()
+					local inv = user:get_inventory()
 
-					if pos then core.add_item(pos, replace_with_item) end
+					if inv:room_for_item("main", { name = replace_with_item }) then
+						inv:add_item("main", replace_with_item)
+					else
+						local pos = user:get_pos()
+
+						if pos then
+							pos.y = math.floor(pos.y + 0.5)
+							core.add_item(pos, replace_with_item)
+						end
+					end
 				end
 			end
 		end
-
 		-- check for alcohol
 		local units = minetest.registered_items[itemname].groups
 			and minetest.registered_items[itemname].groups.alcohol or 0
