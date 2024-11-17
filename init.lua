@@ -138,7 +138,7 @@ local function exhaust_player(player, v)
 
 		local h = get_int_attribute(player)
 
-		if h > 0 then
+		if h and h > 0 then
 			stamina_update_level(player, h - 1)
 		end
 	end
