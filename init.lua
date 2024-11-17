@@ -125,6 +125,12 @@ local function exhaust_player(player, v)
 		return
 	end
 
+	if stamina.players[name] == nil then
+		stamina.players[name] = {
+			exhaustion = 0
+		}
+	end
+
 	local exhaustion = stamina.players[name].exhaustion + v
 
 	if exhaustion > STAMINA_EXHAUST_LVL then
